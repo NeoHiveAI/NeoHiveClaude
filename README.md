@@ -16,7 +16,15 @@ A Claude Code plugin marketplace for the [NeoHive](https://github.com/NeoHiveAi)
 /plugin install neohive@neohive-claude
 ```
 
-### 3. (Optional) Set your auth token
+### 3. Run the guided setup
+
+```
+/neohive:getting-started
+```
+
+One command walks you through verifying the MCP server, setting up auth, migrating any existing project memory (CLAUDE.md, AGENTS.md, `.claude/rules`) into NeoHive, and optionally enabling the smart-recall hook. 3–5 minutes end-to-end.
+
+### 4. (Optional) Environment overrides
 
 If your NeoHive server requires auth, export a bearer token before launching Claude:
 
@@ -24,7 +32,7 @@ If your NeoHive server requires auth, export a bearer token before launching Cla
 export NEOHIVE_TOKEN="your-token-here"
 ```
 
-To disable the auto-context hook for a session:
+Disable the auto-context hook for a session:
 
 ```bash
 export NEOHIVE_HOOK_DISABLED=1
@@ -38,7 +46,11 @@ NeoHive cognitive memory — MCP server registration, managed rules for tool usa
 
 | Type | Name | Description |
 |------|------|-------------|
+| Skill | `getting-started` | Guided first-run: verify MCP, set auth, migrate memory, enable helpers. Start here. |
 | Skill | `start` | Pre-load relevant NeoHive memories for the current task via `memory_context` |
+| Skill | `migrate-memory` | Scan local `CLAUDE.md` / `AGENTS.md` / `.claude/rules` and migrate project-scoped entries into NeoHive |
+| Skill | `generate-docs` | Design a documentation gold standard through Socratic dialogue, save to NeoHive, validate with sample pages |
+| Skill | `generate-post-submit-hook` | Generate a tailored smart-recall hook that rewrites prompts with a small model before querying NeoHive |
 | Skill | `revise-vector-memory` | End-of-session extraction of learnings, corrections, and insights into vector memory |
 | Hook | `SessionStart` | Installs/updates `~/.claude/rules/neohive.md` with persistent tool-usage instructions |
 | Hook | `UserPromptSubmit` | Injects relevant memories into context automatically on every prompt |
@@ -64,6 +76,12 @@ NeoHiveClaude/
         ├── rules/neohive.md        # Persistent tool-usage instructions
         └── skills/
             ├── start/SKILL.md
+            ├── getting-started/SKILL.md
+            ├── migrate-memory/SKILL.md
+            ├── generate-docs/SKILL.md
+            ├── generate-post-submit-hook/
+            │   ├── SKILL.md
+            │   └── template.sh
             └── revise-vector-memory/SKILL.md
 ```
 
