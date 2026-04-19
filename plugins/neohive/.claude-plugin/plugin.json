@@ -1,0 +1,8 @@
+{
+  "name": "neohive",
+  "description": "NeoHive cognitive memory — MCP server registration, managed rules for tool usage, and post-session learning extraction",
+  "version": "1.0.0",
+  "author": {
+    "name": "NeoHiveAi"
+  }
+}
