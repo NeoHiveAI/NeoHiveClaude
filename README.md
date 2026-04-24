@@ -54,10 +54,8 @@ NeoHive cognitive memory — MCP server registration, managed rules for tool usa
 | Skill | `revise-vector-memory` | End-of-session extraction of learnings, corrections, and insights into vector memory |
 | Hook | `SessionStart` | Installs/updates `~/.claude/rules/neohive.md` with persistent tool-usage instructions |
 | Hook | `UserPromptSubmit` | Injects relevant memories into context automatically on every prompt |
-| MCP | `securisource-neohive` | HTTP MCP server for the Securisource NeoHive |
-| MCP | `snyk-neohive` | HTTP MCP server for the Snyk NeoHive |
 
-The `.mcp.json` inside the plugin registers HTTP MCP servers on the NeoHive gateway. Override the server URLs or add additional hives by editing your project-level `.mcp.json` or `~/.claude.json`.
+The plugin does **not** ship a pre-configured MCP server — you register your own NeoHive gateway via Claude Code's built-in MCP commands (e.g. `/mcp` in-session or `claude mcp add`). The hook and skills discover any MCP server whose key contains `neohive` in your project `.mcp.json` or `~/.claude.json`, so one registration covers the whole plugin.
 
 ## Repository Layout
 
@@ -68,7 +66,6 @@ NeoHiveClaude/
 └── plugins/
     └── neohive/
         ├── .claude-plugin/plugin.json
-        ├── .mcp.json               # HTTP MCP server registration
         ├── hooks/
         │   ├── hooks.json
         │   ├── session-start.sh    # Manages ~/.claude/rules/neohive.md

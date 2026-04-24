@@ -25,9 +25,59 @@ Open with this exact script (do not paraphrase):
 
 Wait for acknowledgement (any affirmative reply, or just continue if they say nothing).
 
-## Phase 1 — Verify MCP reachability
+## Phase 1 — Register and verify the MCP server
 
-Call `list_hives` immediately. Interpret the outcome:
+The plugin ships **without** a pre-configured MCP server, so the first task is registering your NeoHive gateway with Claude Code.
+
+### 1a. Check whether a NeoHive MCP is already registered
+
+Run this to detect any `*neohive*`-keyed MCP server in the project or user config:
+
+```bash
+python3 - <<'PY' 2>/dev/null || echo "no neohive MCP found"
+import json, os
+found = []
+for path in (".mcp.json", os.path.expanduser("~/.claude.json")):
+    try:
+        with open(path) as f: data = json.load(f)
+    except Exception: continue
+    servers = data.get("mcpServers", data)
+    if not isinstance(servers, dict): continue
+    for k, v in servers.items():
+        if "neohive" in k.lower() and isinstance(v, dict):
+            found.append(f"{path}: {k} -> {v.get('url', '<no url>')}")
+for line in found or ["no neohive MCP found"]:
+    print(line)
+PY
+```
+
+- **If one is found:** call `list_hives` and interpret per the table below.
+- **If none is found:** guide the user to register one (see 1b), then rerun `list_hives`.
+
+### 1b. Registering a server (only if none found)
+
+Tell the user:
+
+> The NeoHive plugin doesn't bundle a default MCP server — you register yours explicitly. Two ways:
+>
+> **In-session (recommended):**
+> ```
+> /mcp
+> ```
+> Choose "Add server", pick HTTP, name it `neohive` (any key containing "neohive" works), and paste your gateway URL (e.g. `https://your-neohive-host/hiveminds/<hive-id>/mcp`).
+>
+> **CLI:**
+> ```bash
+> claude mcp add neohive --transport http --url "https://your-neohive-host/hiveminds/<hive-id>/mcp"
+> ```
+>
+> After registering, restart Claude and rerun `/neohive:getting-started`.
+
+Pause here until the user confirms they've registered it, or say "skip" to jump to Phase 5.
+
+### 1c. Verify with `list_hives`
+
+Once a server is registered, call `list_hives` and interpret:
 
 | Outcome | What to tell the user |
 |---|---|
@@ -40,12 +90,32 @@ Call `list_hives` immediately. Interpret the outcome:
 Run these checks and report results in a compact block:
 
 ```bash
-# 1. Is .mcp.json present in the plugin install?
-ls "$CLAUDE_PLUGIN_ROOT/.mcp.json" 2>&1 || echo "missing"
-# 2. Is NEOHIVE_TOKEN set?
+# 1. Is NEOHIVE_TOKEN set?
 [ -n "${NEOHIVE_TOKEN:-}" ] && echo "token set" || echo "token not set"
-# 3. Can we reach the server?
-grep -oE 'https?://[^"]+' "$CLAUDE_PLUGIN_ROOT/.mcp.json" | head -1 | xargs -I{} curl -sS -o /dev/null -w "HTTP %{http_code}\n" --max-time 5 "{}" 2>&1 || true
+# 2. Can we reach the registered server?
+python3 - <<'PY' 2>/dev/null
+import json, os, urllib.request, ssl
+url = None
+for path in (".mcp.json", os.path.expanduser("~/.claude.json")):
+    try:
+        with open(path) as f: data = json.load(f)
+    except Exception: continue
+    servers = data.get("mcpServers", data)
+    if not isinstance(servers, dict): continue
+    for k, v in servers.items():
+        if "neohive" in k.lower() and isinstance(v, dict) and v.get("url"):
+            url = v["url"]; break
+    if url: break
+if not url:
+    print("no neohive URL registered — rerun 1b"); raise SystemExit
+try:
+    ctx = ssl.create_default_context(); ctx.check_hostname = False; ctx.verify_mode = ssl.CERT_NONE
+    req = urllib.request.Request(url, method="GET")
+    with urllib.request.urlopen(req, timeout=5, context=ctx) as r:
+        print(f"HTTP {r.status} from {url}")
+except Exception as e:
+    print(f"unreachable: {type(e).__name__}: {e}")
+PY
 ```
 
 Then use `AskUserQuestion` to offer: "Fix token now", "I'll fix it later and restart Claude", "Skip MCP setup for now". If they skip, jump to Phase 5 with a warning that memory features won't work.

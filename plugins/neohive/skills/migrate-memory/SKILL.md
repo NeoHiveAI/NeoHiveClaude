@@ -83,7 +83,7 @@ Call `list_hives`. Report the list with descriptions. Then use `AskUserQuestion`
 
 - **Header:** "Target hive"
 - **Question:** "Which hive should these memories land in?"
-- Options: dynamically populated from `list_hives`, with `(Recommended)` suffix on the hive whose description best matches the project (e.g. a hive with "securisource" in its description for a securisource repo)
+- Options: dynamically populated from `list_hives`, with `(Recommended)` suffix on the hive whose description best matches the project (e.g. a hive whose description names the repo's primary language or domain)
 
 If only one hive exists, skip the question and announce "Using the only available hive: <name>".
 
