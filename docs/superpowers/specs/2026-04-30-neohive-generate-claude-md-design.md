@@ -41,23 +41,28 @@ The motivating problem: design partners running the `neohive` plugin show low Ne
 ```yaml
 ---
 name: generate-claude-md
-description: Generate a project-specific NeoHive topology block in ./CLAUDE.md by surveying connected hives. Use when the user says "generate my NeoHive CLAUDE.md", "regenerate the topology", or during first-time setup via /neohive:getting-started. Re-runnable when hives change.
+description: Generate a project-specific NeoHive topology block in ./CLAUDE.md by surveying connected hives (list_hives + memory_stats + sampled memory_recall probes). Runs as Phase 3 of /neohive:getting-started, and is also user-invocable for re-runs when hives change. Use when the user says "generate my NeoHive CLAUDE.md", "regenerate the topology", "re-survey my hives".
 user-invocable: true
 allowed-tools: Bash, Read, Write, Edit, Grep, Glob, AskUserQuestion
 ---
 ```
 
-(NeoHive MCP tools `list_hives`, `memory_stats`, `memory_recall` are available globally to the session, not declared in `allowed-tools`.)
+Notes on `allowed-tools`:
 
-### Three internal phases
+- NeoHive MCP tools (`list_hives`, `memory_stats`, `memory_recall`) are available globally to the session and are NOT declared in `allowed-tools`.
+- The `Skill` tool is intentionally NOT listed — this skill does not invoke any sub-skill. Conversely, `getting-started` (the parent) MUST list `Skill` so it can invoke `generate-claude-md`; that's already true today.
 
-1. **Cartography** — read-only data-gathering against the connected NeoHive MCP server. No user input required.
-2. **Synthesis** — LLM judgment over cartography output produces a draft topology block; user reviews and approves the draft.
-3. **Write** — file-safety logic detects existing markers, computes diff, gets explicit user confirmation, then writes.
+### Three internal stages
 
-Each phase has at most one user gate (synthesis has the table-review gate; write has the diff-confirm gate). The cartography phase is silent unless it errors.
+The skill runs as three stages internally. To avoid collision with `getting-started`'s own "Phase N" numbering, this spec calls them **Stage A**, **Stage B**, **Stage C**:
 
-## Phase 1 — Cartography (no user input)
+- **Stage A — Cartography** — read-only data-gathering against the connected NeoHive MCP server. No user input required.
+- **Stage B — Synthesis** — LLM judgment over cartography output produces a draft topology block; user reviews and approves the draft.
+- **Stage C — Write** — file-safety logic detects existing markers, computes diff, gets explicit user confirmation, then writes.
+
+Each stage has at most one user gate (Stage B has the table-review gate; Stage C has the diff-confirm gate). Stage A is silent unless it errors.
+
+## Stage A — Cartography (no user input)
 
 ```
 1.1  list_hives                         → name, UUID, type, description per hive
@@ -83,7 +88,7 @@ Each phase has at most one user gate (synthesis has the table-review gate; write
 - `memory_stats` unavailable → continue; mark every row's "Write to it?" cell with `(verify)` and surface a one-line warning during the synthesis review gate.
 - `memory_recall` returns nothing for a hive after the derived probes → re-attempt with the generic fallback probes. If still empty, set "What it holds" to `description` verbatim and append `(no sampled memories)`.
 
-## Phase 2 — Synthesis
+## Stage B — Synthesis
 
 For each hive, the skill produces:
 
@@ -109,10 +114,10 @@ Render the proposed table to the terminal, then `AskUserQuestion`:
 - Options: `Looks good — proceed to write`, `Edit a row`, `Re-sample with different probes`, `Cancel`
 
 `Edit a row` → ask which row + which column → accept free-text override → re-render and re-confirm.
-`Re-sample with different probes` → ask for probe terms → re-run Phase 1.3 only → re-synthesize.
+`Re-sample with different probes` → ask for probe terms → re-run Stage A.3 only → re-synthesize.
 `Cancel` → exit cleanly, no file writes.
 
-## Phase 3 — Write
+## Stage C — Write
 
 ### Write-behavior matrix
 
@@ -133,25 +138,30 @@ Render the proposed table to the terminal, then `AskUserQuestion`:
 <!-- END neohive-managed v=1 -->
 ```
 
-Both markers carry the same `v=` integer. Future generator versions can detect `v=` mismatches and offer upgrade paths.
+Both markers carry the same `v=` integer.
+
+**v1 upgrade behavior:** any existing block, regardless of `v=` value, is replaced wholesale on regeneration. v1 does NOT implement format-aware upgrade migration — older blocks are not parsed, only located and overwritten. The `v=` integer exists so that future generator versions (v2+) can introduce migration paths if the block format changes incompatibly; until then, treat it as advisory metadata.
 
 ### Diff-and-confirm gate
 
 1. Compute proposed file content in memory.
-2. Write to a temp file (`./.CLAUDE.md.neohive.tmp`).
-3. Run `diff -u CLAUDE.md ./.CLAUDE.md.neohive.tmp` (treating absent CLAUDE.md as `/dev/null`); print the unified diff to terminal.
+2. Write to a temp file allocated via `mktemp` in `$TMPDIR` (NOT in the project worktree — keeps `git status` clean and avoids accidentally committing the temp file). Register a cleanup trap so the temp file is removed on any exit path including SIGINT and uncaught errors.
+3. Run `diff -u CLAUDE.md "$tmp"` (treating absent `CLAUDE.md` as `/dev/null`); print the unified diff to terminal.
 4. `AskUserQuestion`:
    - **Header:** "Write block"
    - **Question:** "Write this block to ./CLAUDE.md?"
    - Options: `Write`, `Edit block first`, `Cancel`
-5. `Write` → atomic move temp → `CLAUDE.md`. `Edit block first` → spawn `$EDITOR` on temp → re-show diff → re-confirm. `Cancel` → delete temp, exit.
+5. `Write` → atomic `mv "$tmp" ./CLAUDE.md` (atomic within same filesystem; fall back to `cp + rm` with a warning if `mv` crosses filesystems). `Edit block first` → spawn `$EDITOR` on `$tmp` → re-show diff → re-confirm. `Cancel` → cleanup trap fires, exit.
 
 ### Pre-write safety check
 
-If `./CLAUDE.md` is inside a git worktree with uncommitted changes to that file, warn:
-> `CLAUDE.md` has uncommitted changes — recommend committing first so this skill's diff is easy to review separately. Continue?
+The check is gated on whether the **target file** (`./CLAUDE.md`) is inside a git worktree, not on the cwd. Logic:
 
-User can confirm or cancel. Do not auto-commit.
+- If `git -C $(dirname ./CLAUDE.md) rev-parse --is-inside-work-tree` returns `true`:
+  - Run `git status --porcelain -- ./CLAUDE.md`. If non-empty, warn:
+    > `CLAUDE.md` has uncommitted changes — recommend committing first so this skill's diff is easy to review separately. Continue?
+  - User can confirm or cancel. Do not auto-commit.
+- If the rev-parse fails (not a git repo): silently skip the check. The user has chosen to work outside a repo; do not nag.
 
 ## Generated content template
 
@@ -205,33 +215,51 @@ specific reason.** When you do, write one sentence in the memory body explaining
 | Variable | Source | Format |
 |---|---|---|
 | `{{DATE}}` | system date at run time | `YYYY-MM-DD` |
-| `{{ROWS}}` | Phase 2 synthesis | one markdown table row per hive |
-| `{{QUERY_PHRASING_GUIDANCE}}` | Phase 2 — adapted to embedder mix | 1 paragraph; mentions code-token queries iff any code-tuned hive present; mentions affirmative-statement queries iff any prose-tuned hive present; recommends both styles via `queries` parameter when both present. |
-| `{{HIVE_PROVENANCE_GUIDE}}` | Phase 2 | 1 paragraph; per-hive 1-liner mapping name → typical content profile (e.g., "a hit from `<name>` came from indexed code; treat as factual"). |
-| `{{DOMAIN_RECALL_SEEDS}}` | Phase 2 — synthesized from sampled content | 3-5 example query strings as a markdown bullet list, scoped to the project's domain. |
-| `{{ROUTING_TABLE}}` | static template + actual hive names interpolated where the routing rules reference specific hives | 2-column markdown table; structurally same as Snyk's "What Goes Where" table; row contents reference user's actual hive names. |
-| `{{DEFAULT_WRITE_HIVE}}` | Phase 2 default-write-target selection | hive name in backticks |
-| `{{DEFAULT_WRITE_RATIONALE}}` | Phase 2 | 1 sentence; cites why this hive was chosen (e.g., "it is the only `knowledge`-typed hive and accepts curated prose entries"). |
-| `{{ADDITIONAL_WRITE_HIVES_DISAMBIGUATION}}` | Phase 2 — only emitted when 2+ hives are write-safe | bulleted disambiguation rules ("Use `<X>` when ...; use `<Y>` when ..."). Empty when only 1 write-safe hive. |
+| `{{ROWS}}` | Stage B synthesis | one markdown table row per hive |
+| `{{QUERY_PHRASING_GUIDANCE}}` | Stage B — adapted to embedder mix | 1 paragraph; mentions code-token queries iff any code-tuned hive present; mentions affirmative-statement queries iff any prose-tuned hive present; recommends both styles via `queries` parameter when both present. |
+| `{{HIVE_PROVENANCE_GUIDE}}` | Stage B | 1 paragraph; per-hive 1-liner mapping name → typical content profile (e.g., "a hit from `<name>` came from indexed code; treat as factual"). |
+| `{{DOMAIN_RECALL_SEEDS}}` | Stage B — synthesized from sampled content | 3-5 example query strings as a markdown bullet list, scoped to the project's domain. |
+| `{{ROUTING_TABLE}}` | static template + actual hive names interpolated where the routing rules reference specific hives | 2-column markdown table; structurally same as Snyk's "What Goes Where" table; row contents reference user's actual hive names. **N=1 case:** still emit the full 2-column table — the conceptual split between cognitive memory and CLAUDE.md is independent of hive count, and a single-hive install still benefits from the routing guidance. |
+| `{{DEFAULT_WRITE_HIVE}}` | Stage B default-write-target selection | hive name in backticks |
+| `{{DEFAULT_WRITE_RATIONALE}}` | Stage B | 1 sentence; cites why this hive was chosen (e.g., "it is the only `knowledge`-typed hive and accepts curated prose entries"). |
+| `{{ADDITIONAL_WRITE_HIVES_DISAMBIGUATION}}` | Stage B — only emitted when 2+ hives are write-safe | bulleted disambiguation rules ("Use `<X>` when ...; use `<Y>` when ..."). Empty when only 1 write-safe hive. |
 
 ## Coordination changes (existing files)
 
-### `migrate-memory/SKILL.md` (Phase 1, Discovery)
+### `migrate-memory/SKILL.md` — marker-aware parsing
 
-Add this rule before candidate parsing:
+The marker exclusion is a **parser-level** concern, so it belongs in Phase 2 (Parse into candidate memories), not Phase 1 (Discover local memory sources). Phase 1's Bash discovery block continues to emit only filenames + sizes.
 
-> When scanning a project file (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`), if the file contains content between `<!-- BEGIN neohive-managed v=N -->` and `<!-- END neohive-managed v=N -->`, **exclude that span from candidate parsing**. The marker block is generated by `/neohive:generate-claude-md` and is intentionally not migrated — it's the topology/routing reference Claude needs in context BEFORE `memory_context` is called, so it must stay in CLAUDE.md.
+Add this rule at the top of Phase 2:
 
-Adjust the file-discovery report so the user sees that bytes are excluded:
+> Before splitting a project file into candidate memories, strip any content between `<!-- BEGIN neohive-managed v=N -->` and `<!-- END neohive-managed v=N -->` markers. The marker block is generated by `/neohive:generate-claude-md` and is intentionally not migrated — it's the topology/routing reference Claude needs in context BEFORE `memory_context` is called, so it must stay in CLAUDE.md.
+
+**Concrete parsing strategy:** a line-range scan suffices. Match the regex `<!-- BEGIN neohive-managed v=\d+ -->` to find an opening marker; drop every line until matching `<!-- END neohive-managed v=\d+ -->`. Mismatched / unterminated markers are treated as a parse error and surfaced to the user with the offending file path; do not silently consume content.
+
+Optionally enrich Phase 1's discovery report with a small marker-detection note (cheap — single grep per file):
 
 ```
 Project-scoped sources found:
-  - ./CLAUDE.md (4.2 KB, 1.1 KB excluded as neohive-managed)
+  - ./CLAUDE.md (4.2 KB, contains neohive-managed block — will be skipped during parsing)
 ```
+
+Implementer's choice on whether to add this enrichment to Phase 1; the parsing exclusion in Phase 2 is the load-bearing change.
 
 ### `getting-started/SKILL.md` — phase reorganization
 
-Insert new Phase 3, renumber existing Phases 3 → 4, 4 → 5, 5 → 6.
+The current file has six numbered phases (Phase 0 — *Tell the user what's about to happen* through Phase 5 — *Final summary*). Insert the new Phase 3 between current Phase 2 and current Phase 3, then renumber so the file ends at Phase 6.
+
+**Renumbering map (exhaustive):**
+
+| Current | New | Phase title |
+|---|---|---|
+| Phase 0 | Phase 0 | Tell the user what's about to happen |
+| Phase 1 | Phase 1 | Register and verify the MCP server |
+| Phase 2 | Phase 2 | Auth token (only if needed) |
+| —       | **Phase 3** | **Generate project CLAUDE.md topology (NEW)** |
+| Phase 3 | Phase 4 | Migrate existing project memory |
+| Phase 4 | Phase 5 | Smart-recall hook (optional, power users) |
+| Phase 5 | Phase 6 | Final summary |
 
 New Phase 3 prose:
 
@@ -267,13 +295,18 @@ generate-claude-md: 3 hives mapped, default write target: Knowledge,
 written to ./CLAUDE.md (block lines 42-87, +35 lines vs previous version).
 ```
 
-When the skill replaces an existing block, the summary additionally reports row-level diffs in a terse form:
+When the skill replaces an existing block, the summary additionally reports row-level diffs in a terse form. **Only emit a row when something actually changed** — unchanged hives are not listed:
 
 ```
   Topology changes:
     + added hive: StarlangLearnings (markdown, prose-tuned, RARELY write)
-    ~ updated hive: patterns (write-policy NO → NO unchanged; "What it holds" updated)
-    - removed hive: <none>
+    ~ updated hive: patterns ("What it holds" updated; sample memory count grew 12 → 38)
+```
+
+If nothing changed at all (the regenerated block is identical to the existing one), surface that explicitly:
+
+```
+  Topology changes: none — block already up to date.
 ```
 
 ## Error-handling table
@@ -287,6 +320,33 @@ When the skill replaces an existing block, the summary additionally reports row-
 | User declines write gate | Print would-be content; exit | No partial writes |
 | `./CLAUDE.md` has uncommitted git changes | Warn; user confirms or cancels | Skill does not auto-commit |
 | File write fails (permissions / disk) | Surface OS error; leave file untouched | No retry, no partial state |
+
+## Testing
+
+Manual verification steps for the implementer:
+
+**Stage A (Cartography) — run in isolation against a real NeoHive MCP:**
+- Confirm `list_hives` returns names + UUIDs; record output for fixture-building.
+- Confirm `memory_stats` returns per-hive type counts; record output.
+- Confirm probe-derivation produces sane queries for at least one realistic hive description (e.g., a hive named `Knowledge` with description "Curated insights"). Spot-check that probes are not just stopwords.
+
+**Stage B (Synthesis) — fixture-driven:**
+- Write a small fixture file capturing 2-3 representative `list_hives` + `memory_stats` + `memory_recall` shapes (one code-tuned hive, one prose-tuned hive, one auto-managed hive heavy in `example_pattern`).
+- Run synthesis against the fixture; assert the produced table has the expected `Write to it?` policy per hive (`NO`/`YES`/`RARELY`) and that `(verify)` markers appear iff a column is uncertain.
+- Decline the review gate; confirm no file is written.
+
+**Stage C (Write) — three integration cases:**
+1. Empty directory (no `./CLAUDE.md`): run skill, accept gates → assert `./CLAUDE.md` exists with marker block.
+2. Existing `./CLAUDE.md` with marker block (from a previous run): run skill → assert only the marker block region changed; pre-existing user content outside markers byte-for-byte identical.
+3. Existing `./CLAUDE.md` without markers (e.g., user-authored repo CLAUDE.md): run skill → assert original file content is preserved verbatim, marker block appended at EOF.
+
+**Coordination — migrate-memory regression:**
+- After Stage C runs, invoke `/neohive:migrate-memory` against the same `./CLAUDE.md`. Confirm: (a) Phase 1 detects the file; (b) Phase 2 parsing produces zero candidates from the marker-block region; (c) any user-authored content outside markers is parsed as candidates normally.
+
+**Coordination — getting-started end-to-end:**
+- Fresh repo + fresh NeoHive install. Run `/neohive:getting-started`. Confirm phases 0-6 fire in order, the new Phase 3 invokes `generate-claude-md`, and the final summary shows `✓ Project topology block in ./CLAUDE.md (N hives mapped)`.
+
+No automated test harness is in scope for v1; manual verification per the above is sufficient. If the marketplace later adopts a test harness, fold these into it.
 
 ## Files changed by implementation
 
