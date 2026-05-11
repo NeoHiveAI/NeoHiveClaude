@@ -1,6 +1,6 @@
 ---
 name: getting-started
-description: First-run setup for NeoHive. Walks a new user through verifying the MCP server, setting up auth, generating a project-specific topology block in CLAUDE.md, migrating existing project memory, and enabling optional helpers. Invoke this once per machine after installing the neohive plugin. Use when the user says "set up NeoHive", "get me started with NeoHive", "first time using NeoHive", or when `list_hives` has never been called in this repo.
+description: Use when the user says "set up NeoHive", "get me started with NeoHive", "first time using NeoHive", "onboard me to NeoHive", or when `list_hives` has never been called in this repo. First-run setup that walks a new user through verifying the MCP server, configuring auth, generating a project-specific topology block in CLAUDE.md, migrating existing project memory (CLAUDE.md / AGENTS.md / .claude/rules), and enabling optional helpers. Invoke once per machine after installing the neohive plugin. Distinct from `/neohive:load-context`, which runs at the start of every session.
 user-invocable: true
 allowed-tools: Bash, Read, Grep, Glob, AskUserQuestion, Skill
 ---
@@ -185,7 +185,7 @@ Ask:
 - **Question:** "The default hook passes your prompt verbatim to NeoHive. A smarter version uses a small model to rewrite the query first — usually better results, but costs a few tokens per prompt. Set it up?"
 - Options: `Not now (Recommended)`, `Yes, set it up`, `Tell me more first`
 
-If "Yes": invoke `Skill(skill="neohive:generate-post-submit-hook")`.
+If "Yes": invoke `Skill(skill="neohive:enable-smart-prompts")`.
 If "Tell me more": explain in 3–4 sentences (what it adds, what it costs, how to disable) then re-ask.
 
 ## Phase 6 — Final summary
@@ -197,21 +197,21 @@ Print a checklist of what's been set up and what's left. Use ✓ / ○ prefixes:
 ✓ Auth token configured
 ✓ Project topology block in ./CLAUDE.md (N hives mapped)
 ✓ N project memories migrated
-○ Smart-recall hook (skipped — rerun /neohive:generate-post-submit-hook anytime)
+○ Smart-recall hook (skipped; rerun /neohive:enable-smart-prompts anytime)
 ```
 
 Then this exact closing block:
 
 > **You're set. Three things to remember:**
->   1. Start every new session with `/neohive:start <what you're working on>` to pre-load relevant memory.
->   2. End sessions with `/neohive:revise-vector-memory` so new insights get captured.
->   3. When docs feel stale, try `/neohive:generate-docs`.
+>   1. Start every new session with `/neohive:load-context <what you're working on>` to pre-load relevant memory.
+>   2. End sessions with `/neohive:capture-session-learnings` so new insights get captured.
+>   3. When docs feel stale, try `/neohive:design-codebase-docs`.
 >
 > Run `/neohive:getting-started` again anytime to revisit these steps.
 
 ## Important rules
 
-- **Never call `memory_store` directly from this skill.** Delegate to `migrate-memory` or `revise-vector-memory`.
+- **Never call `memory_store` directly from this skill.** Delegate to `migrate-memory` or `capture-session-learnings`.
 - **Never edit the user's shell rc files yourself.** Show the command, let them paste.
 - **If the user says "stop" or "skip" at any phase, stop immediately** and print the Phase 6 summary with what's done so far.
 - **If any sub-skill fails, surface the error plainly** and offer to skip that phase rather than retrying silently.

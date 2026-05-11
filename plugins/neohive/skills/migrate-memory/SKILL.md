@@ -1,6 +1,6 @@
 ---
 name: migrate-memory
-description: Scan local project memory files (CLAUDE.md, AGENTS.md, GEMINI.md, .claude/rules) and migrate the PROJECT-SPECIFIC entries into NeoHive so the whole team can share them. User-preference entries are filtered out. Always read-only until the user explicitly confirms. Use when the user says "migrate my memory", "move my CLAUDE.md into NeoHive", or during first-time setup via `/neohive:getting-started`.
+description: Use when the user says "migrate my memory", "move my CLAUDE.md into NeoHive", "import my project rules into NeoHive", or during first-time setup via `/neohive:getting-started`. Scans local project memory files (CLAUDE.md, AGENTS.md, GEMINI.md, .claude/rules) and migrates project-specific entries into NeoHive so the whole team can share them. Filters out user-preference entries. Always read-only until the user explicitly confirms in Phase 5.
 user-invocable: true
 allowed-tools: Bash, Read, Grep, Glob, AskUserQuestion
 ---
@@ -85,7 +85,7 @@ For each candidate, assign:
 - `user`: references personal preferences, editor settings, generic "I prefer X" statements. Examples: "I prefer tabs over spaces", "Use fish shell", "My name is X".
 - `ambiguous`: could be either. Examples: "Never use `--no-verify`" (could be personal discipline OR a team rule).
 
-**Type:** one of `directive`, `convention`, `decision`, `insight`, `error_pattern`, `syntax_rule`, `semantic_rule`, `example_pattern`, `idiom` (same taxonomy as `revise-vector-memory`).
+**Type:** one of `directive`, `convention`, `decision`, `insight`, `error_pattern`, `syntax_rule`, `semantic_rule`, `example_pattern`, `idiom` (same taxonomy as `capture-session-learnings`).
 
 **Importance:** 1–10. Rules/musts → 8–9. Conventions → 6–7. Insights/gotchas → 5–7.
 
@@ -164,7 +164,7 @@ Migration complete.
   User-scoped:          Z (skipped)
   Ambiguous:            W (skipped — migrate manually if needed)
 
-Next: update your CLAUDE.md to reference NeoHive instead of duplicating these rules. Run /neohive:revise-vector-memory at the end of each session to keep the hive fresh.
+Next: update your CLAUDE.md to reference NeoHive instead of duplicating these rules. Run /neohive:capture-session-learnings at the end of each session to keep the hive fresh.
 ```
 
 ## Important rules

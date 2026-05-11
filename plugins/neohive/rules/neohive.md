@@ -1,11 +1,11 @@
 ---
-version: "1.0.0"
+version: "1.4.0"
 managed_by: neohive-plugin
 ---
 
 # NeoHive Cognitive Memory
 
-You have access to a persistent semantic memory system via MCP tools. This memory stores knowledge across sessions — corrections, conventions, decisions, insights, and code patterns. **Use it actively, not passively.**
+You have access to a persistent semantic memory system via MCP tools. The hives connected to this session may contain durable team knowledge **and indexed source code** (typically embedded with a code-tuned model such as `jina-embeddings-v2-base-code`). Treat the hives as a first-class navigation surface, not a side-channel. **Use them actively, not passively.**
 
 ## Session Start — ALWAYS Do This First
 
@@ -15,6 +15,35 @@ Call `memory_context` with a description of your current task BEFORE doing any w
 - BAD: `"what do we know about auth?"`
 
 If the task involves a specific domain (e.g., starlang rules, dashboard tiles), call `memory_context` again with a domain-specific description to pre-load relevant context.
+
+## Codebase Exploration — Prefer `memory_recall` Over File Traversal
+
+If a hive contains the codebase you're working in (the `list_hives` output names a `repo`-typed hive, or `memory_context` returned indexed code snippets), call `memory_recall` BEFORE doing broad file exploration with Glob, Grep, or Read. The indexed embedding is almost always faster and uses less context than walking the tree:
+
+- Frame the query as what you'd say to a teammate: `"how does the sync engine handle git clone credentials"` not `"find git clone code"`.
+- Use `memory_recall` to locate the relevant files, then use `Read` for the precise line numbers you need to edit.
+- Fall back to Glob/Grep only when you need an exact symbol that semantic search misses, or for files outside the index (e.g. brand-new files in your working tree).
+
+This applies for the entire session, not just at start: every time you'd reach for "let me search the codebase for X," try `memory_recall` first.
+
+The plugin also ships a `PreToolUse` hook (`pretool-tree-walker.sh`) that fires on `Glob` and `Grep` whenever the current working directory is inside a project with a NeoHive MCP server configured in `.mcp.json`. By default the hook lets the tool run and injects a reminder; set `NEOHIVE_PRETOOL_STRICT=1` to make it hard-deny those tools in indexed projects, or `NEOHIVE_PRETOOL_DISABLED=1` to opt out entirely.
+
+## Delegating to Subagents — Prefer `explore-neohive` Over Built-In `Explore`
+
+This plugin bundles a subagent called **`explore-neohive`** whose tool allowlist and system prompt force semantic recall first. Whenever you would dispatch the built-in `Explore` agent for codebase or knowledge exploration in this project, dispatch `explore-neohive` instead. It is faster, uses less context, and returns ranked snippets with provenance metadata that filesystem tools cannot produce.
+
+Examples of when to pick `explore-neohive`:
+- "Where is X defined?" / "How does Y work?" / "What's the convention for Z?"
+- Architecture questions, decision archaeology, locating files by concept rather than by exact symbol.
+- Open-ended research where you don't yet know the precise file paths.
+
+Stick with the built-in `Explore` only when:
+- The project has no NeoHive instance reachable (no `mcp__neohive__*` tools available), or
+- You need an exact-symbol search that semantic recall has already missed in this session.
+
+**Other subagents (implementation, general-purpose, etc.):** The MCP tool list is inherited by subagents you spawn, but **the directives in this rules file are not.** When the work touches an indexed area of the codebase, include in the subagent's prompt:
+
+> "This project has a NeoHive instance with indexed code/knowledge. Before file exploration, call `mcp__neohive__memory_recall` (or `mcp__neohive__memory_context` if you're starting fresh) with an affirmative description of what you're looking for. Use Glob/Grep/Read only for precise line numbers or files the index doesn't cover."
 
 ## Discovering Hives
 
@@ -50,3 +79,17 @@ Memory types: `directive` (rules/musts), `convention` (practices/preferences), `
 ## Forgetting — memory_forget
 
 Call `memory_forget` when knowledge becomes outdated or is superseded by a correction. Always provide a `reason` and `superseded_by` ID if a replacement was stored.
+
+## User-Invocable Skills
+
+The plugin ships these slash commands. Suggest them when the user's request matches:
+
+- `/neohive:getting-started` — first-run setup (verify MCP, configure auth, generate topology block, migrate memory, enable helpers). Run once per machine.
+- `/neohive:load-context` — pre-load relevant memory for the current task via `memory_context`. Run at the start of every session.
+- `/neohive:generate-claude-md` — survey connected hives and write a project-specific topology block into `./CLAUDE.md`. Re-run when hives are added, removed, or renamed.
+- `/neohive:capture-session-learnings` — end-of-session extraction of corrections, conventions, decisions, and insights into NeoHive. Also fires automatically from the stop hook.
+- `/neohive:migrate-memory` — scan local `CLAUDE.md` / `AGENTS.md` / `.claude/rules` and import project-scoped entries into a hive.
+- `/neohive:design-codebase-docs` — Socratic design of a documentation standard, save to NeoHive, validate with sample pages.
+- `/neohive:enable-smart-prompts` — install a smarter UserPromptSubmit hook that rewrites prompts with a small model before querying NeoHive.
+
+The slugs `revise-vector-memory`, `start`, `generate-docs`, and `generate-post-submit-hook` are deprecated aliases that redirect to the new names; they will be removed in a future minor release.
