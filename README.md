@@ -47,13 +47,17 @@ NeoHive cognitive memory — MCP server registration, managed rules for tool usa
 | Type | Name | Description |
 |------|------|-------------|
 | Skill | `getting-started` | Guided first-run: verify MCP, set auth, migrate memory, enable helpers. Start here. |
-| Skill | `start` | Pre-load relevant NeoHive memories for the current task via `memory_context` |
+| Skill | `load-context` | Pre-load relevant NeoHive memories for the current task via `memory_context`. Run at the start of every session. |
 | Skill | `migrate-memory` | Scan local `CLAUDE.md` / `AGENTS.md` / `.claude/rules` and migrate project-scoped entries into NeoHive |
-| Skill | `generate-docs` | Design a documentation gold standard through Socratic dialogue, save to NeoHive, validate with sample pages |
-| Skill | `generate-post-submit-hook` | Generate a tailored smart-recall hook that rewrites prompts with a small model before querying NeoHive |
-| Skill | `revise-vector-memory` | End-of-session extraction of learnings, corrections, and insights into vector memory |
+| Skill | `design-codebase-docs` | Design a documentation gold standard through Socratic dialogue, save to NeoHive, validate with sample pages |
+| Skill | `enable-smart-prompts` | Generate a tailored smart-recall hook that rewrites prompts with a small model before querying NeoHive |
+| Skill | `capture-session-learnings` | End-of-session extraction of learnings, corrections, and insights into NeoHive semantic memory |
+| Agent | `explore-neohive` | Semantic-first codebase + knowledge exploration subagent. Prefer this over the built-in `Explore` in NeoHive-indexed projects. |
 | Hook | `SessionStart` | Installs/updates `~/.claude/rules/neohive.md` with persistent tool-usage instructions |
 | Hook | `UserPromptSubmit` | Injects relevant memories into context automatically on every prompt |
+| Hook | `PreToolUse` (Glob, Grep) | Nudges Claude toward `memory_recall` when running broad filesystem searches inside an indexed project (`NEOHIVE_PRETOOL_STRICT=1` to hard-deny, `NEOHIVE_PRETOOL_DISABLED=1` to opt out) |
+
+The slugs `start`, `revise-vector-memory`, `generate-docs`, and `generate-post-submit-hook` remain as deprecated aliases that redirect to the new names; they will be removed in a future minor release.
 
 The plugin does **not** ship a pre-configured MCP server — you register your own NeoHive gateway via Claude Code's built-in MCP commands (e.g. `/mcp` in-session or `claude mcp add`). The hook and skills discover any MCP server whose key contains `neohive` in your project `.mcp.json` or `~/.claude.json`, so one registration covers the whole plugin.
 
@@ -62,24 +66,31 @@ The plugin does **not** ship a pre-configured MCP server — you register your o
 ```
 NeoHiveClaude/
 ├── .claude-plugin/
-│   └── marketplace.json            # Marketplace catalog
+│   └── marketplace.json                 # Marketplace catalog
 └── plugins/
     └── neohive/
         ├── .claude-plugin/plugin.json
+        ├── agents/
+        │   └── explore-neohive.md       # Semantic-first exploration subagent
         ├── hooks/
         │   ├── hooks.json
-        │   ├── session-start.sh    # Manages ~/.claude/rules/neohive.md
-        │   └── neohive-context.sh  # UserPromptSubmit memory recall
-        ├── rules/neohive.md        # Persistent tool-usage instructions
+        │   ├── session-start.sh         # Manages ~/.claude/rules/neohive.md
+        │   ├── neohive-context.sh       # UserPromptSubmit memory recall
+        │   └── pretool-tree-walker.sh   # PreToolUse nudge on Glob/Grep
+        ├── rules/neohive.md             # Persistent tool-usage instructions
         └── skills/
-            ├── start/SKILL.md
             ├── getting-started/SKILL.md
+            ├── load-context/SKILL.md
+            ├── capture-session-learnings/SKILL.md
             ├── migrate-memory/SKILL.md
-            ├── generate-docs/SKILL.md
-            ├── generate-post-submit-hook/
+            ├── design-codebase-docs/SKILL.md
+            ├── enable-smart-prompts/
             │   ├── SKILL.md
             │   └── template.sh
-            └── revise-vector-memory/SKILL.md
+            ├── start/SKILL.md                       # deprecated alias
+            ├── revise-vector-memory/SKILL.md        # deprecated alias
+            ├── generate-docs/SKILL.md               # deprecated alias
+            └── generate-post-submit-hook/SKILL.md   # deprecated alias
 ```
 
 ## Development

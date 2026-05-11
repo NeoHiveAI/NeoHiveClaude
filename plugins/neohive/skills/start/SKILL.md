@@ -1,24 +1,18 @@
 ---
 name: start
-description: Initialize NeoHive memory for the current session. Call at the start of a session to load relevant knowledge before doing any work.
+description: DEPRECATED alias for `/neohive:load-context`. This slug will be removed in a future minor release. Use `/neohive:load-context` instead.
 user-invocable: true
+allowed-tools: Skill
 ---
 
-# Initialize NeoHive Memory
+# Deprecated: `start`
 
-Call `memory_context` immediately to pre-load relevant knowledge for this session.
+This skill has been renamed to **`load-context`** for end-user clarity (`start` was generic and collided with built-in commands in many tools). The behavior is identical.
 
-## Task Description
+Invoke the new slug now and stop:
 
-If the user provided arguments: use `$ARGUMENTS` as the task description.
+```
+Skill(skill="neohive:load-context")
+```
 
-If no arguments were provided: summarize the current task based on conversation context so far. If there is no context yet, ask the user what they're working on.
-
-## After Loading
-
-Once `memory_context` returns, briefly report:
-- How many relevant memories were loaded
-- The key topics/directives that were surfaced (1-3 bullet points max)
-- Whether any directives or conventions were found that should guide this session
-
-Then proceed with whatever the user asked for. Do not ask for confirmation to continue.
+Tell the user once: "Note: `/neohive:start` was renamed to `/neohive:load-context`; please use the new slug going forward."

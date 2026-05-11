@@ -1,11 +1,11 @@
 ---
-version: "1.3.0"
+version: "1.4.0"
 managed_by: neohive-plugin
 ---
 
 # NeoHive Cognitive Memory
 
-You have access to a persistent semantic memory system via MCP tools. The hives connected to this session may contain durable team knowledge **and indexed source code** — treat them as a first-class navigation surface, not a side-channel. **Use them actively, not passively.**
+You have access to a persistent semantic memory system via MCP tools. The hives connected to this session may contain durable team knowledge **and indexed source code** (typically embedded with a code-tuned model such as `jina-embeddings-v2-base-code`). Treat the hives as a first-class navigation surface, not a side-channel. **Use them actively, not passively.**
 
 ## Session Start — ALWAYS Do This First
 
@@ -24,9 +24,9 @@ If a hive contains the codebase you're working in (the `list_hives` output names
 - Use `memory_recall` to locate the relevant files, then use `Read` for the precise line numbers you need to edit.
 - Fall back to Glob/Grep only when you need an exact symbol that semantic search misses, or for files outside the index (e.g. brand-new files in your working tree).
 
-This applies for the entire session, not just at start — every time you'd reach for "let me search the codebase for X," try `memory_recall` first.
+This applies for the entire session, not just at start: every time you'd reach for "let me search the codebase for X," try `memory_recall` first. The MCP server itself surfaces a self-reinforcing hint on every `memory_recall` / `memory_context` response (result count, top score, latency); when you see that hint, take it as a cue to keep using semantic recall instead of switching to filesystem tools.
 
-The plugin also ships a `PreToolUse` hook (`pretool-tree-walker.sh`) that fires on `Glob` and `Grep` whenever the current working directory is inside a project with a NeoHive MCP server configured in `.mcp.json`. By default the hook lets the tool run and injects a reminder; set `NEOHIVE_PRETOOL_STRICT=1` to make it hard-deny those tools in indexed projects, or `NEOHIVE_PRETOOL_DISABLED=1` to opt out entirely.
+The plugin also ships a `PreToolUse` hook (`pretool-tree-walker.sh`) that fires on `Glob` and `Grep` whenever the current working directory is inside a project with a NeoHive MCP server configured in `.mcp.json`. By default the hook lets the tool run and injects a reminder; set `NEOHIVE_PRETOOL_STRICT=1` to make it hard-deny those tools in indexed projects, or `NEOHIVE_PRETOOL_DISABLED=1` to opt out entirely. To suppress the in-response hint emitted by `memory_recall` / `memory_context`, set `NEOHIVE_MCP_HINTS=0`.
 
 ## Delegating to Subagents — Prefer `explore-neohive` Over Built-In `Explore`
 
@@ -79,3 +79,16 @@ Memory types: `directive` (rules/musts), `convention` (practices/preferences), `
 ## Forgetting — memory_forget
 
 Call `memory_forget` when knowledge becomes outdated or is superseded by a correction. Always provide a `reason` and `superseded_by` ID if a replacement was stored.
+
+## User-Invocable Skills
+
+The plugin ships these slash commands. Suggest them when the user's request matches:
+
+- `/neohive:getting-started` — first-run setup (verify MCP, configure auth, migrate memory, enable helpers). Run once per machine.
+- `/neohive:load-context` — pre-load relevant memory for the current task via `memory_context`. Run at the start of every session.
+- `/neohive:capture-session-learnings` — end-of-session extraction of corrections, conventions, decisions, and insights into NeoHive. Also fires automatically from the stop hook.
+- `/neohive:migrate-memory` — scan local `CLAUDE.md` / `AGENTS.md` / `.claude/rules` and import project-scoped entries into a hive.
+- `/neohive:design-codebase-docs` — Socratic design of a documentation standard, save to NeoHive, validate with sample pages.
+- `/neohive:enable-smart-prompts` — install a smarter UserPromptSubmit hook that rewrites prompts with a small model before querying NeoHive.
+
+The slugs `revise-vector-memory`, `start`, `generate-docs`, and `generate-post-submit-hook` are deprecated aliases that redirect to the new names; they will be removed in a future minor release.

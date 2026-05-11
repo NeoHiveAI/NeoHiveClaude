@@ -1,6 +1,6 @@
 ---
 name: explore-neohive
-description: Semantic-first codebase and knowledge exploration agent for projects with a NeoHive index. Use this INSTEAD of the built-in `Explore` agent whenever the current project has an indexed NeoHive (a `repo`-typed or knowledge hive is reachable via the `mcp__neohive__*` tools). Searches the vector index first via `memory_recall` / `memory_context` and only reads files for precise excerpts after the index has located them — typically much faster than tree-walking and uses far less context. Best for "where is X defined", "how does Y work", "what's the convention for Z", architectural questions, decision archaeology, and locating files by concept rather than by exact symbol.
+description: Use INSTEAD of the built-in `Explore` agent whenever the current project has an indexed NeoHive (a `repo`-typed or knowledge hive reachable via `mcp__neohive__*` tools). Best for "where is X defined", "how does Y work", "what's the convention for Z", architectural questions, decision archaeology, and locating files by concept rather than by exact symbol. Searches the vector index first via `memory_recall` / `memory_context` and only reads files for precise excerpts after the index has located them; typically much faster than tree-walking and uses far less context.
 tools: mcp__neohive__memory_recall, mcp__neohive__memory_context, mcp__neohive__list_hives, Read, Bash
 model: sonnet
 ---
