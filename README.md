@@ -22,7 +22,7 @@ A Claude Code plugin marketplace for the [NeoHive](https://github.com/NeoHiveAi)
 /neohive:getting-started
 ```
 
-One command walks you through verifying the MCP server, setting up auth, migrating any existing project memory (CLAUDE.md, AGENTS.md, `.claude/rules`) into NeoHive, and optionally enabling the smart-recall hook. 3–5 minutes end-to-end.
+One command walks you through verifying the MCP server, setting up auth, generating a project-specific topology block in your `CLAUDE.md`, migrating any existing project memory (CLAUDE.md, AGENTS.md, `.claude/rules`) into NeoHive, and optionally enabling the smart-recall hook. 3–5 minutes end-to-end.
 
 ### 4. (Optional) Environment overrides
 
@@ -46,8 +46,9 @@ NeoHive cognitive memory — MCP server registration, managed rules for tool usa
 
 | Type | Name | Description |
 |------|------|-------------|
-| Skill | `getting-started` | Guided first-run: verify MCP, set auth, migrate memory, enable helpers. Start here. |
+| Skill | `getting-started` | Guided first-run: verify MCP, set auth, generate topology block, migrate memory, enable helpers. Start here. |
 | Skill | `load-context` | Pre-load relevant NeoHive memories for the current task via `memory_context`. Run at the start of every session. |
+| Skill | `generate-claude-md` | Survey connected hives and write a project-specific topology block into `./CLAUDE.md` (hive table, write-routing, session-start non-negotiables). Re-runnable when hives change. |
 | Skill | `migrate-memory` | Scan local `CLAUDE.md` / `AGENTS.md` / `.claude/rules` and migrate project-scoped entries into NeoHive |
 | Skill | `design-codebase-docs` | Design a documentation gold standard through Socratic dialogue, save to NeoHive, validate with sample pages |
 | Skill | `enable-smart-prompts` | Generate a tailored smart-recall hook that rewrites prompts with a small model before querying NeoHive |
@@ -82,6 +83,7 @@ NeoHiveClaude/
             ├── getting-started/SKILL.md
             ├── load-context/SKILL.md
             ├── capture-session-learnings/SKILL.md
+            ├── generate-claude-md/SKILL.md
             ├── migrate-memory/SKILL.md
             ├── design-codebase-docs/SKILL.md
             ├── enable-smart-prompts/

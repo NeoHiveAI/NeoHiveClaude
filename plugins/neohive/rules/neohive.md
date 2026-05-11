@@ -84,8 +84,9 @@ Call `memory_forget` when knowledge becomes outdated or is superseded by a corre
 
 The plugin ships these slash commands. Suggest them when the user's request matches:
 
-- `/neohive:getting-started` — first-run setup (verify MCP, configure auth, migrate memory, enable helpers). Run once per machine.
+- `/neohive:getting-started` — first-run setup (verify MCP, configure auth, generate topology block, migrate memory, enable helpers). Run once per machine.
 - `/neohive:load-context` — pre-load relevant memory for the current task via `memory_context`. Run at the start of every session.
+- `/neohive:generate-claude-md` — survey connected hives and write a project-specific topology block into `./CLAUDE.md`. Re-run when hives are added, removed, or renamed.
 - `/neohive:capture-session-learnings` — end-of-session extraction of corrections, conventions, decisions, and insights into NeoHive. Also fires automatically from the stop hook.
 - `/neohive:migrate-memory` — scan local `CLAUDE.md` / `AGENTS.md` / `.claude/rules` and import project-scoped entries into a hive.
 - `/neohive:design-codebase-docs` — Socratic design of a documentation standard, save to NeoHive, validate with sample pages.

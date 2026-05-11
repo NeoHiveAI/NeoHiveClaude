@@ -1,6 +1,6 @@
 ---
 name: getting-started
-description: Use when the user says "set up NeoHive", "get me started with NeoHive", "first time using NeoHive", "onboard me to NeoHive", or when `list_hives` has never been called in this repo. First-run setup that walks a new user through verifying the MCP server, configuring auth, migrating existing project memory (CLAUDE.md / AGENTS.md / .claude/rules), and enabling optional helpers. Invoke once per machine after installing the neohive plugin. Distinct from `/neohive:load-context`, which runs at the start of every session.
+description: Use when the user says "set up NeoHive", "get me started with NeoHive", "first time using NeoHive", "onboard me to NeoHive", or when `list_hives` has never been called in this repo. First-run setup that walks a new user through verifying the MCP server, configuring auth, generating a project-specific topology block in CLAUDE.md, migrating existing project memory (CLAUDE.md / AGENTS.md / .claude/rules), and enabling optional helpers. Invoke once per machine after installing the neohive plugin. Distinct from `/neohive:load-context`, which runs at the start of every session.
 user-invocable: true
 allowed-tools: Bash, Read, Grep, Glob, AskUserQuestion, Skill
 ---
@@ -18,8 +18,9 @@ Open with this exact script (do not paraphrase):
 > I'll walk you through setting up NeoHive on this machine. This takes 3–5 minutes and covers:
 >   1. Confirming your NeoHive server is reachable
 >   2. (Optional) Setting up your auth token
->   3. Migrating existing project knowledge into NeoHive
->   4. (Optional) Turning on the smart-recall hook
+>   3. Generating a project-specific topology block in your CLAUDE.md
+>   4. Migrating existing project knowledge into NeoHive
+>   5. (Optional) Turning on the smart-recall hook
 >
 > You can stop at any point by saying "stop" or answering "skip" to a step.
 
@@ -73,7 +74,7 @@ Tell the user:
 >
 > After registering, restart Claude and rerun `/neohive:getting-started`.
 
-Pause here until the user confirms they've registered it, or say "skip" to jump to Phase 5.
+Pause here until the user confirms they've registered it, or say "skip" to jump to Phase 6.
 
 ### 1c. Verify with `list_hives`
 
@@ -118,7 +119,7 @@ except Exception as e:
 PY
 ```
 
-Then use `AskUserQuestion` to offer: "Fix token now", "I'll fix it later and restart Claude", "Skip MCP setup for now". If they skip, jump to Phase 5 with a warning that memory features won't work.
+Then use `AskUserQuestion` to offer: "Fix token now", "I'll fix it later and restart Claude", "Skip MCP setup for now". If they skip, jump to Phase 6 with a warning that memory features won't work.
 
 ## Phase 2 — Auth token (only if needed)
 
@@ -138,7 +139,27 @@ For "Yes — I have one", show:
 
 For the other answers, provide the matching guidance verbatim — don't improvise.
 
-## Phase 3 — Migrate existing project memory
+## Phase 3 — Generate project CLAUDE.md topology
+
+Now that the MCP is reachable, generate a project-specific topology block in `./CLAUDE.md`. This is what makes Claude reliable about *which* hive to query and *where* new writes should land — without it, the rules in `~/.claude/rules/neohive.md` are running blind.
+
+Ask (one `AskUserQuestion`):
+
+- **Header:** "Topology block"
+- **Question:** "Generate a project topology block in ./CLAUDE.md? (Recommended — improves tool-calling accuracy for everyone on this repo.)"
+- Options: `Yes (Recommended)`, `Yes, but let me review the table before writing`, `Skip — I'll run /neohive:generate-claude-md later`
+
+If "Yes" or "Yes, but review": invoke the generator skill via the Skill tool:
+
+```
+Skill(skill="neohive:generate-claude-md")
+```
+
+The sub-skill handles its own confirmation gates (synthesis review + diff review), so this phase just waits for it to return. When it returns, report: "Topology block written to ./CLAUDE.md (N hives mapped)."
+
+If "Skip": tell the user they can run `/neohive:generate-claude-md` anytime to add the block, and continue.
+
+## Phase 4 — Migrate existing project memory
 
 Ask (one `AskUserQuestion`):
 
@@ -156,7 +177,7 @@ Wait for it to complete. Report: "Migration done — N memories stored." Then co
 
 If "Yes, but review each": invoke `neohive:migrate-memory` with argument `review=each` so it pauses per candidate.
 
-## Phase 4 — Smart-recall hook (optional, power users)
+## Phase 5 — Smart-recall hook (optional, power users)
 
 Ask:
 
@@ -167,13 +188,14 @@ Ask:
 If "Yes": invoke `Skill(skill="neohive:enable-smart-prompts")`.
 If "Tell me more": explain in 3–4 sentences (what it adds, what it costs, how to disable) then re-ask.
 
-## Phase 5 — Final summary
+## Phase 6 — Final summary
 
 Print a checklist of what's been set up and what's left. Use ✓ / ○ prefixes:
 
 ```
 ✓ MCP server reachable (N hives: ...)
 ✓ Auth token configured
+✓ Project topology block in ./CLAUDE.md (N hives mapped)
 ✓ N project memories migrated
 ○ Smart-recall hook (skipped; rerun /neohive:enable-smart-prompts anytime)
 ```
@@ -191,5 +213,5 @@ Then this exact closing block:
 
 - **Never call `memory_store` directly from this skill.** Delegate to `migrate-memory` or `capture-session-learnings`.
 - **Never edit the user's shell rc files yourself.** Show the command, let them paste.
-- **If the user says "stop" or "skip" at any phase, stop immediately** and print the Phase 5 summary with what's done so far.
+- **If the user says "stop" or "skip" at any phase, stop immediately** and print the Phase 6 summary with what's done so far.
 - **If any sub-skill fails, surface the error plainly** and offer to skip that phase rather than retrying silently.
