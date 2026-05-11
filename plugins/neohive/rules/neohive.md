@@ -1,5 +1,5 @@
 ---
-version: "1.2.0"
+version: "1.3.0"
 managed_by: neohive-plugin
 ---
 
@@ -25,6 +25,8 @@ If a hive contains the codebase you're working in (the `list_hives` output names
 - Fall back to Glob/Grep only when you need an exact symbol that semantic search misses, or for files outside the index (e.g. brand-new files in your working tree).
 
 This applies for the entire session, not just at start — every time you'd reach for "let me search the codebase for X," try `memory_recall` first.
+
+The plugin also ships a `PreToolUse` hook (`pretool-tree-walker.sh`) that fires on `Glob` and `Grep` whenever the current working directory is inside a project with a NeoHive MCP server configured in `.mcp.json`. By default the hook lets the tool run and injects a reminder; set `NEOHIVE_PRETOOL_STRICT=1` to make it hard-deny those tools in indexed projects, or `NEOHIVE_PRETOOL_DISABLED=1` to opt out entirely.
 
 ## Delegating to Subagents — Prefer `explore-neohive` Over Built-In `Explore`
 
