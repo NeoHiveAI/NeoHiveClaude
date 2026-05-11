@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "NeoHive cognitive memory plugins for Claude Code",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "pluginRoot": "./plugins"
   },
   "plugins": [
     {
       "name": "neohive",
       "source": "./plugins/neohive",
-      "description": "NeoHive cognitive memory — MCP server registration, managed rules for tool usage, and post-session learning extraction"
+      "description": "NeoHive cognitive memory — MCP server registration, managed rules for tool usage, the explore-neohive subagent, and post-session learning extraction"
     }
   ]
 }
