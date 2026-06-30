@@ -1,5 +1,5 @@
 ---
-version: "1.5.0"
+version: '1.6.0'
 managed_by: neohive-plugin
 ---
 
@@ -24,20 +24,22 @@ If a hive contains the codebase you're working in (the `list_hives` output names
 - Use `memory_recall` to locate the relevant files, then use `Read` for the precise line numbers you need to edit.
 - Fall back to Glob/Grep only when you need an exact symbol that semantic search misses, or for files outside the index (e.g. brand-new files in your working tree).
 
-This applies for the entire session, not just at start: every time you'd reach for "let me search the codebase for X," try `memory_recall` first. The MCP server itself surfaces a self-reinforcing hint on every `memory_recall` / `memory_context` response (result count, top score, latency); when you see that hint, take it as a cue to keep using semantic recall instead of switching to filesystem tools.
+This applies for the entire session, not just at start: every time you'd reach for "let me search the codebase for X," try `memory_recall` first.
 
-The plugin also ships a `PreToolUse` hook (`pretool-tree-walker.sh`) that fires on `Glob` and `Grep` whenever the current working directory is inside a project with a NeoHive MCP server configured in `.mcp.json`. By default the hook lets the tool run and injects a reminder; set `NEOHIVE_PRETOOL_STRICT=1` to make it hard-deny those tools in indexed projects, or `NEOHIVE_PRETOOL_DISABLED=1` to opt out entirely. To suppress the in-response hint emitted by `memory_recall` / `memory_context`, set `NEOHIVE_MCP_HINTS=0`.
+The plugin also ships a `PreToolUse` hook (`pretool-tree-walker.sh`) that fires on `Glob` and `Grep` whenever the current working directory is inside a project with a NeoHive MCP server configured in `.mcp.json`. By default the hook lets the tool run and injects a reminder; set `NEOHIVE_PRETOOL_STRICT=1` to make it hard-deny those tools in indexed projects, or `NEOHIVE_PRETOOL_DISABLED=1` to opt out entirely.
 
 ## Delegating to Subagents — Prefer `explore-neohive` Over Built-In `Explore`
 
 This plugin bundles a subagent called **`explore-neohive`** whose tool allowlist and system prompt force semantic recall first. Whenever you would dispatch the built-in `Explore` agent for codebase or knowledge exploration in this project, dispatch `explore-neohive` instead. It is faster, uses less context, and returns ranked snippets with provenance metadata that filesystem tools cannot produce.
 
 Examples of when to pick `explore-neohive`:
+
 - "Where is X defined?" / "How does Y work?" / "What's the convention for Z?"
 - Architecture questions, decision archaeology, locating files by concept rather than by exact symbol.
 - Open-ended research where you don't yet know the precise file paths.
 
 Stick with the built-in `Explore` only when:
+
 - The project has no NeoHive instance reachable (no `mcp__neohive__*` tools available), or
 - You need an exact-symbol search that semantic recall has already missed in this session.
 
@@ -54,6 +56,7 @@ Call `list_hives` to see what hives are available. Each hive has a description e
 When no `hive` parameter is specified, reads search across ALL hives using cross-hive RRF fusion — the most relevant results from any hive are returned. You usually want this behavior.
 
 Query formulation matters:
+
 - Write **affirmative statements**, not questions: `"error handling in async batch processing"` not `"How do we handle errors?"`
 - Include **specific domain terms** that would appear in stored knowledge: `"sqlite-vec F32_BLOB column type"` not `"vector database column"`
 - Use the **types parameter** to narrow results: `types: ["directive", "convention"]` for rules, `types: ["error_pattern", "insight"]` for gotchas
@@ -66,6 +69,7 @@ Call `memory_recall` before working on unfamiliar topics or when you need specif
 A `hive` parameter is **required** for writes. Use `list_hives` to find the right hive.
 
 Call `memory_store` when:
+
 - The user corrects you or says "no, we do X instead"
 - A new convention or rule is established
 - You discover a non-obvious gotcha or insight

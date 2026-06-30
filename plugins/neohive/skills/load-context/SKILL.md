@@ -17,6 +17,7 @@ If no arguments were provided: summarize the current task based on conversation 
 ## After Loading
 
 Once `memory_context` returns, briefly report:
+
 - How many relevant memories were loaded
 - The key topics/directives that were surfaced (1-3 bullet points max)
 - Whether any directives or conventions were found that should guide this session
