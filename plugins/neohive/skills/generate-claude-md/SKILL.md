@@ -47,24 +47,24 @@ For each hive, generate 2–3 probe query strings:
 
 ### Stage A failure handling
 
-| Failure | Response |
-|---|---|
-| `list_hives` returns empty / errors | Abort. Tell the user: "Cannot generate topology — no hives reachable. Confirm Phase 1 of `/neohive:getting-started` passed before re-running." Do NOT write anything. |
-| `memory_stats` unavailable | Continue. Mark every hive's `Write to it?` cell `(verify)`. Surface a one-line warning at the Stage B review gate. |
-| `memory_recall` returns nothing for a hive | Re-attempt with the generic fallback probes. If still empty, set `What it holds` to the hive's `description` verbatim and append `(no sampled memories)`. |
+| Failure                                    | Response                                                                                                                                                              |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `list_hives` returns empty / errors        | Abort. Tell the user: "Cannot generate topology — no hives reachable. Confirm Phase 1 of `/neohive:getting-started` passed before re-running." Do NOT write anything. |
+| `memory_stats` unavailable                 | Continue. Mark every hive's `Write to it?` cell `(verify)`. Surface a one-line warning at the Stage B review gate.                                                    |
+| `memory_recall` returns nothing for a hive | Re-attempt with the generic fallback probes. If still empty, set `What it holds` to the hive's `description` verbatim and append `(no sampled memories)`.             |
 
 ## Stage B — Synthesis
 
 Produce one row per hive with these columns:
 
-| Column | Source | Inference rule |
-|---|---|---|
-| Hive (UUID) | `list_hives` | verbatim |
-| Name | `list_hives` | verbatim |
-| Type | `list_hives` | verbatim |
-| Embedding model | `list_hives.description` + heuristic | code-tuned (e.g. `jinaai/jina-embeddings-v2-base-code`) if hive is type `repo` or description mentions "code"/"indexed". Prose-tuned (e.g. `nomic-ai/nomic-embed-text-v1.5`) if type is `knowledge`/`markdown` or description mentions "prose"/"curated". When uncertain → `(verify)`. |
-| What it holds | sampled memories from A.3 + type-distribution from A.2 | 1–2 sentences grounded in real content. Cite the type composition (e.g., "Mostly `convention` and `insight` entries — curated knowledge"). |
-| Write to it? | type-distribution from A.2 | Heavy `example_pattern` / `syntax_rule` / `stdlib_reference` → "**NO** — auto-managed; manual writes risk being overwritten by indexing." Mixed `convention` / `directive` / `insight` → "**YES** — default write target." Small + `directive`-heavy → "**RARELY** — only for durable, language-level conventions. Ask the user before writing here." |
+| Column          | Source                                                 | Inference rule                                                                                                                                                                                                                                                                                                                                        |
+| --------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hive (UUID)     | `list_hives`                                           | verbatim                                                                                                                                                                                                                                                                                                                                              |
+| Name            | `list_hives`                                           | verbatim                                                                                                                                                                                                                                                                                                                                              |
+| Type            | `list_hives`                                           | verbatim                                                                                                                                                                                                                                                                                                                                              |
+| Embedding model | `list_hives.description` + heuristic                   | code-tuned (e.g. `jinaai/jina-embeddings-v2-base-code`) if hive is type `repo` or description mentions "code"/"indexed". Prose-tuned (e.g. `nomic-ai/nomic-embed-text-v1.5`) if type is `knowledge`/`markdown` or description mentions "prose"/"curated". When uncertain → `(verify)`.                                                                |
+| What it holds   | sampled memories from A.3 + type-distribution from A.2 | 1–2 sentences grounded in real content. Cite the type composition (e.g., "Mostly `convention` and `insight` entries — curated knowledge").                                                                                                                                                                                                            |
+| Write to it?    | type-distribution from A.2                             | Heavy `example_pattern` / `syntax_rule` / `stdlib_reference` → "**NO** — auto-managed; manual writes risk being overwritten by indexing." Mixed `convention` / `directive` / `insight` → "**YES** — default write target." Small + `directive`-heavy → "**RARELY** — only for durable, language-level conventions. Ask the user before writing here." |
 
 ### Default write target
 
@@ -100,11 +100,11 @@ Warning text: "`CLAUDE.md` has uncommitted changes — recommend committing firs
 
 ### Write-behavior matrix
 
-| Existing `./CLAUDE.md` state | Action |
-|---|---|
-| File absent | Create `./CLAUDE.md` containing only the marker block. |
+| Existing `./CLAUDE.md` state                                   | Action                                                                                                 |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| File absent                                                    | Create `./CLAUDE.md` containing only the marker block.                                                 |
 | File present with `<!-- BEGIN neohive-managed v=N -->` markers | Replace content between markers; preserve everything outside. Update `v=N` to current version (`v=1`). |
-| File present without markers | Append the marker block to end-of-file. Preserves user-authored content at the top. |
+| File present without markers                                   | Append the marker block to end-of-file. Preserves user-authored content at the top.                    |
 
 **v1 upgrade behavior:** any existing block, regardless of `v=`, is replaced wholesale. v1 does not implement format-aware migration.
 
@@ -114,9 +114,9 @@ Warning text: "`CLAUDE.md` has uncommitted changes — recommend committing firs
 2. Allocate temp file via `mktemp` in `$TMPDIR` (NOT in the project worktree). Register a cleanup trap so the temp file is removed on any exit path including SIGINT.
 3. Run `diff -u CLAUDE.md "$tmp"` (treat absent `CLAUDE.md` as `/dev/null`); print the unified diff to terminal.
 4. `AskUserQuestion`:
-   - **Header:** "Write block"
-   - **Question:** "Write this block to ./CLAUDE.md?"
-   - Options: `Write`, `Edit block first`, `Cancel`
+    - **Header:** "Write block"
+    - **Question:** "Write this block to ./CLAUDE.md?"
+    - Options: `Write`, `Edit block first`, `Cancel`
 5. `Write` → atomic `mv "$tmp" ./CLAUDE.md`. `Edit block first` → spawn `$EDITOR` on `$tmp` → re-show diff → re-confirm. `Cancel` → cleanup trap fires, exit.
 
 ## Generated content template
@@ -136,7 +136,8 @@ WHICH hive serves which query, and where new writes should land.
 ### Hive Topology
 
 | Hive (UUID) | Name | Type | Embedding model | What it holds | Write to it? |
-|---|---|---|---|---|---|
+| ----------- | ---- | ---- | --------------- | ------------- | ------------ |
+
 {{ROWS}}
 
 **Why query phrasing matters here.** {{QUERY_PHRASING_GUIDANCE}}
@@ -149,12 +150,13 @@ WHICH hive serves which query, and where new writes should land.
 2. Confirm the topology above has not drifted: call `list_hives` once per session.
    If a hive is added / removed / renamed, re-run `/neohive:generate-claude-md`.
 3. Follow up with a targeted `memory_recall` for this project's domain. Suggested seeds:
-{{DOMAIN_RECALL_SEEDS}}
+   {{DOMAIN_RECALL_SEEDS}}
 
 ### What Goes Where: Cognitive Memory vs CLAUDE.md
 
 | Store in **Cognitive Memory** | Store in **CLAUDE.md** |
-|---|---|
+| ----------------------------- | ---------------------- |
+
 {{ROUTING_TABLE}}
 
 ### Hive routing for writes
@@ -170,17 +172,17 @@ specific reason.** When you do, write one sentence in the memory body explaining
 
 ### Substitution variables
 
-| Variable | Format |
-|---|---|
-| `{{DATE}}` | `YYYY-MM-DD` |
-| `{{ROWS}}` | One markdown table row per hive (Stage B output). |
-| `{{QUERY_PHRASING_GUIDANCE}}` | One paragraph. Mention code-token queries iff any code-tuned hive is present; mention affirmative-statement queries iff any prose-tuned hive is present; recommend both styles via `queries` parameter when both. |
-| `{{HIVE_PROVENANCE_GUIDE}}` | One paragraph. Per-hive 1-liner mapping name → typical content profile (e.g., "a hit from `<name>` came from indexed code; treat as factual"). |
-| `{{DOMAIN_RECALL_SEEDS}}` | 3–5 example query strings as a markdown bullet list, scoped to the project's domain (synthesized from sampled content). |
-| `{{ROUTING_TABLE}}` | 2-column markdown table; structurally same as the Snyk reference; row contents reference user's actual hive names. **N=1 case:** still emit both columns — the conceptual split is independent of hive count. |
-| `{{DEFAULT_WRITE_HIVE}}` | Hive name in backticks. |
-| `{{DEFAULT_WRITE_RATIONALE}}` | One sentence; cite why this hive was chosen. |
-| `{{ADDITIONAL_WRITE_HIVES_DISAMBIGUATION}}` | Bulleted disambiguation rules; only emit when ≥2 hives are write-safe. Empty otherwise. |
+| Variable                                    | Format                                                                                                                                                                                                            |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `{{DATE}}`                                  | `YYYY-MM-DD`                                                                                                                                                                                                      |
+| `{{ROWS}}`                                  | One markdown table row per hive (Stage B output).                                                                                                                                                                 |
+| `{{QUERY_PHRASING_GUIDANCE}}`               | One paragraph. Mention code-token queries iff any code-tuned hive is present; mention affirmative-statement queries iff any prose-tuned hive is present; recommend both styles via `queries` parameter when both. |
+| `{{HIVE_PROVENANCE_GUIDE}}`                 | One paragraph. Per-hive 1-liner mapping name → typical content profile (e.g., "a hit from `<name>` came from indexed code; treat as factual").                                                                    |
+| `{{DOMAIN_RECALL_SEEDS}}`                   | 3–5 example query strings as a markdown bullet list, scoped to the project's domain (synthesized from sampled content).                                                                                           |
+| `{{ROUTING_TABLE}}`                         | 2-column markdown table; structurally same as the Snyk reference; row contents reference user's actual hive names. **N=1 case:** still emit both columns — the conceptual split is independent of hive count.     |
+| `{{DEFAULT_WRITE_HIVE}}`                    | Hive name in backticks.                                                                                                                                                                                           |
+| `{{DEFAULT_WRITE_RATIONALE}}`               | One sentence; cite why this hive was chosen.                                                                                                                                                                      |
+| `{{ADDITIONAL_WRITE_HIVES_DISAMBIGUATION}}` | Bulleted disambiguation rules; only emit when ≥2 hives are write-safe. Empty otherwise.                                                                                                                           |
 
 ## End-of-run summary
 
@@ -203,14 +205,14 @@ If nothing changed: `Topology changes: none — block already up to date.`
 
 ## Common mistakes
 
-| Mistake | Fix |
-|---|---|
-| Writing the file before Stage C diff confirmation | Cartography and synthesis are read-only. The first write is after the user picks `Write` at the diff gate. |
-| Modifying content outside the marker block | Markers are a hard boundary. Anything outside `<!-- BEGIN ... -->` / `<!-- END ... -->` is user-owned. |
-| Confidently guessing embedding model from hive name | When uncertain, mark `(verify)`. The user fixes it once; the next regeneration preserves their override only if they keep the row content stable. |
-| Inferring write-policy from hive description alone | `memory_stats` is the load-bearing signal. If it's unavailable, mark `(verify)` everywhere — do NOT fall back to description-only inference. |
-| Including `Skill` in `allowed-tools` | This skill does not invoke sub-skills. The parent (`getting-started`) lists `Skill` so it can invoke this one; this skill itself does not need it. |
-| Putting the temp file in the project worktree | Use `mktemp` in `$TMPDIR`. Otherwise the temp file shows up in `git status` mid-run and can be accidentally committed. |
+| Mistake                                             | Fix                                                                                                                                                |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Writing the file before Stage C diff confirmation   | Cartography and synthesis are read-only. The first write is after the user picks `Write` at the diff gate.                                         |
+| Modifying content outside the marker block          | Markers are a hard boundary. Anything outside `<!-- BEGIN ... -->` / `<!-- END ... -->` is user-owned.                                             |
+| Confidently guessing embedding model from hive name | When uncertain, mark `(verify)`. The user fixes it once; the next regeneration preserves their override only if they keep the row content stable.  |
+| Inferring write-policy from hive description alone  | `memory_stats` is the load-bearing signal. If it's unavailable, mark `(verify)` everywhere — do NOT fall back to description-only inference.       |
+| Including `Skill` in `allowed-tools`                | This skill does not invoke sub-skills. The parent (`getting-started`) lists `Skill` so it can invoke this one; this skill itself does not need it. |
+| Putting the temp file in the project worktree       | Use `mktemp` in `$TMPDIR`. Otherwise the temp file shows up in `git status` mid-run and can be accidentally committed.                             |
 
 ## Important rules
 

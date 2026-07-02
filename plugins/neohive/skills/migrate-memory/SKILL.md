@@ -65,12 +65,14 @@ If a file contains a marker block, mention it once in your scan output:
 For each project-scoped file (with marker blocks already stripped), break the content into **atomic candidate memories**. A candidate is a single self-contained directive, convention, decision, or insight that would make sense read in isolation 6 months from now.
 
 Heuristics:
+
 - One markdown bullet → one candidate
 - One paragraph containing a rule ("Always use X", "Never do Y") → one candidate
 - A section like "## Testing" containing multiple rules → one candidate per rule, not the whole section
 - Code examples: keep the surrounding prose + example together as one candidate
 
 Skip content that is:
+
 - Pure metadata (version headers, tables of contents)
 - Installation/setup instructions (these belong in README, not memory)
 - Transient state (TODO lists, "currently broken" sections)
@@ -81,6 +83,7 @@ Skip content that is:
 For each candidate, assign:
 
 **Scope:** `project` | `user` | `ambiguous`
+
 - `project`: references this specific codebase, team practices, domain-specific rules. Examples: "We use sqlite-vec for embeddings", "Always run tests through `.venv/bin/python3`", "The `starlang` rule format requires X".
 - `user`: references personal preferences, editor settings, generic "I prefer X" statements. Examples: "I prefer tabs over spaces", "Use fish shell", "My name is X".
 - `ambiguous`: could be either. Examples: "Never use `--no-verify`" (could be personal discipline OR a team rule).
@@ -141,14 +144,14 @@ For each approved candidate:
 
 1. Call `memory_recall` with a query derived from the candidate content. Include `limit=3`.
 2. Read the results:
-   - **Strong match (score > 0.85 and semantically identical):** skip, report "already known".
-   - **Weak/partial match:** store anyway — adds a new semantic angle.
-   - **No match:** store.
+    - **Strong match (score > 0.85 and semantically identical):** skip, report "already known".
+    - **Weak/partial match:** store anyway — adds a new semantic angle.
+    - **No match:** store.
 3. Call `memory_store` with:
-   - `hive`: the chosen hive
-   - `content`: the candidate content (full, not truncated)
-   - `type`, `tags`, `importance` from Phase 3
-   - `metadata`: `{"source": "migrate-memory", "origin_file": "<path>", "origin_line": <line>}`
+    - `hive`: the chosen hive
+    - `content`: the candidate content (full, not truncated)
+    - `type`, `tags`, `importance` from Phase 3
+    - `metadata`: `{"source": "migrate-memory", "origin_file": "<path>", "origin_line": <line>}`
 
 Do writes sequentially, not in parallel — rate limiting matters. If any write fails, report the error and ask whether to continue with remaining candidates or abort.
 
