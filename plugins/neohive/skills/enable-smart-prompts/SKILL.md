@@ -41,19 +41,19 @@ Call `list_hives`. Ask:
 - **Header:** "Rewriter model"
 - **Question:** "Which model should rewrite your prompt into a NeoHive query and filter results?"
 - Options:
-  - `claude-haiku-4-5 (Recommended) — fast + cheap`
-  - `claude-sonnet-4-6 — more accurate, slower, ~10x cost`
-  - `claude-opus-4-7 — overkill, only for very noisy hives`
+    - `claude-haiku-4-5 (Recommended) — fast + cheap`
+    - `claude-sonnet-4-6 — more accurate, slower, ~10x cost`
+    - `claude-opus-4-7 — overkill, only for very noisy hives`
 
 ### 3. Trigger policy
 
 - **Header:** "When to run"
 - **Question:** "When should the hook fire?"
 - Options:
-  - `(Recommended) Every prompt longer than 10 chars — skips short clarifications`
-  - `Only when prompt contains a keyword I pick`
-  - `Every prompt — no filtering`
-  - `Manual only — I'll trigger it via an env flag`
+    - `(Recommended) Every prompt longer than 10 chars — skips short clarifications`
+    - `Only when prompt contains a keyword I pick`
+    - `Every prompt — no filtering`
+    - `Manual only — I'll trigger it via an env flag`
 
 If "keyword": ask for the keyword(s) via a follow-up `AskUserQuestion` with `Other`.
 
@@ -62,18 +62,18 @@ If "keyword": ask for the keyword(s) via a follow-up `AskUserQuestion` with `Oth
 - **Header:** "Install location"
 - **Question:** "Where should the hook live?"
 - Options:
-  - `(Recommended) ~/.claude/hooks/neohive-smart-recall.sh — personal, all projects`
-  - `./.claude/hooks/neohive-smart-recall.sh — this project only`
-  - `Just show me the script — I'll place it myself`
+    - `(Recommended) ~/.claude/hooks/neohive-smart-recall.sh — personal, all projects`
+    - `./.claude/hooks/neohive-smart-recall.sh — this project only`
+    - `Just show me the script — I'll place it myself`
 
 ### 5. Disable-flag name
 
 - **Header:** "Disable flag"
 - **Question:** "What env var should disable the hook when set to 1?"
 - Options:
-  - `(Recommended) NEOHIVE_SMART_DISABLED`
-  - `NEOHIVE_HOOK_DISABLED (same flag as the default dumb hook — one switch turns both off)`
-  - `Custom — I'll type it`
+    - `(Recommended) NEOHIVE_SMART_DISABLED`
+    - `NEOHIVE_HOOK_DISABLED (same flag as the default dumb hook — one switch turns both off)`
+    - `Custom — I'll type it`
 
 ## Phase 2 — Preview the generated script
 
@@ -93,9 +93,9 @@ Ask one last `AskUserQuestion`:
 - **Header:** "Install"
 - **Question:** "Install this hook now?"
 - Options:
-  - `(Recommended) Yes, write it and register it in settings.json`
-  - `Yes, write it — I'll register it myself`
-  - `No — I want to tweak the script first`
+    - `(Recommended) Yes, write it and register it in settings.json`
+    - `Yes, write it — I'll register it myself`
+    - `No — I want to tweak the script first`
 
 If "tweak": ask what they want to change, regenerate, re-preview.
 If "no" at any point: stop with "Nothing written."

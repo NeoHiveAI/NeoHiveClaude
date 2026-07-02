@@ -9,12 +9,12 @@
 
 Add a new user-invocable skill, `generate-claude-md`, to the `neohive` plugin. The skill auto-generates a project-specific NeoHive cognitive-memory block in the user's `./CLAUDE.md` by surveying the connected NeoHive hives (`list_hives` + `memory_stats` + sampled `memory_recall` probes) and synthesizing a topology table, write-routing rules, and session-start non-negotiables tailored to that user's hive set. The skill is also wired in as a new Phase 3 of the existing `getting-started` skill, between MCP verification and memory migration.
 
-The motivating problem: design partners running the `neohive` plugin show low NeoHive tool-calling rates because their `CLAUDE.md` does not give Claude a concrete, project-specific map of *which* hive serves *which* query and *where* new writes should land. The shipped `rules/neohive.md` covers generic tool-usage rules but cannot encode this per-project topology — by design, those generic rules are loaded once at session start, before any hive-specific information exists. This skill closes that gap.
+The motivating problem: design partners running the `neohive` plugin show low NeoHive tool-calling rates because their `CLAUDE.md` does not give Claude a concrete, project-specific map of _which_ hive serves _which_ query and _where_ new writes should land. The shipped `rules/neohive.md` covers generic tool-usage rules but cannot encode this per-project topology — by design, those generic rules are loaded once at session start, before any hive-specific information exists. This skill closes that gap.
 
 ## Goals
 
 - Generate a project-specific topology block (`<!-- BEGIN neohive-managed v=1 -->` ... `<!-- END neohive-managed v=1 -->`) inside the repo's `./CLAUDE.md` containing: hive topology table, query-phrasing guidance, hive-provenance interpretation guide, project-specific session-start non-negotiables, "what goes where" routing table, and default write-target rationale.
-- Ground every column of the topology table in *evidence* from the user's actual hives (cartography phase) rather than inference from hive names alone.
+- Ground every column of the topology table in _evidence_ from the user's actual hives (cartography phase) rather than inference from hive names alone.
 - Make the skill safely re-runnable: existing marker blocks are replaced; no clobbering of user content outside the markers.
 - Integrate with the `getting-started` first-run flow as a new Phase 3, while remaining independently invocable as `/neohive:generate-claude-md`.
 - Coexist cleanly with `migrate-memory`: marker-block content is excluded from migration parsing.
@@ -92,14 +92,14 @@ Each stage has at most one user gate (Stage B has the table-review gate; Stage C
 
 For each hive, the skill produces:
 
-| Column | Source | Inference rule |
-|---|---|---|
-| Hive (UUID) | `list_hives` | verbatim |
-| Name | `list_hives` | verbatim |
-| Type | `list_hives` | verbatim (`repo` / `knowledge` / `markdown` / etc.) |
-| Embedding model | `list_hives.description` + heuristic | code-tuned (e.g., `jina-embeddings-v2-base-code`) if hive is type `repo` or description mentions "code" / "indexed"; prose-tuned (e.g., `nomic-embed-text-v1.5`) if type is `knowledge` / `markdown` / description mentions "prose" / "curated". When uncertain, emit `(verify)`. |
-| What it holds | sampled memories from 1.3 + type-distribution from 1.2 | 1-2 sentence synthesis grounded in real content; cite memory-type composition (e.g., "Mostly `convention` and `insight` entries — curated knowledge.") |
-| Write to it? | type-distribution from 1.2 | heavy `example_pattern`/`syntax_rule`/`stdlib_reference` → "**NO** — auto-managed; manual writes risk being overwritten by indexing."  ・ mixed `convention`/`directive`/`insight` → "**YES** — default write target."  ・ small + `directive`-heavy → "**RARELY** — only for durable, language-level conventions. Ask the user before writing here." |
+| Column          | Source                                                 | Inference rule                                                                                                                                                                                                                                                                                                                                      |
+| --------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hive (UUID)     | `list_hives`                                           | verbatim                                                                                                                                                                                                                                                                                                                                            |
+| Name            | `list_hives`                                           | verbatim                                                                                                                                                                                                                                                                                                                                            |
+| Type            | `list_hives`                                           | verbatim (`repo` / `knowledge` / `markdown` / etc.)                                                                                                                                                                                                                                                                                                 |
+| Embedding model | `list_hives.description` + heuristic                   | code-tuned (e.g., `jina-embeddings-v2-base-code`) if hive is type `repo` or description mentions "code" / "indexed"; prose-tuned (e.g., `nomic-embed-text-v1.5`) if type is `knowledge` / `markdown` / description mentions "prose" / "curated". When uncertain, emit `(verify)`.                                                                   |
+| What it holds   | sampled memories from 1.3 + type-distribution from 1.2 | 1-2 sentence synthesis grounded in real content; cite memory-type composition (e.g., "Mostly `convention` and `insight` entries — curated knowledge.")                                                                                                                                                                                              |
+| Write to it?    | type-distribution from 1.2                             | heavy `example_pattern`/`syntax_rule`/`stdlib_reference` → "**NO** — auto-managed; manual writes risk being overwritten by indexing." ・ mixed `convention`/`directive`/`insight` → "**YES** — default write target." ・ small + `directive`-heavy → "**RARELY** — only for durable, language-level conventions. Ask the user before writing here." |
 
 ### Default write target selection
 
@@ -121,11 +121,11 @@ Render the proposed table to the terminal, then `AskUserQuestion`:
 
 ### Write-behavior matrix
 
-| Existing state of `./CLAUDE.md` | Action |
-|---|---|
-| File absent | Create `./CLAUDE.md` containing only the marker block. |
+| Existing state of `./CLAUDE.md`                                | Action                                                                                                        |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| File absent                                                    | Create `./CLAUDE.md` containing only the marker block.                                                        |
 | File present with `<!-- BEGIN neohive-managed v=N -->` markers | Replace contents between the markers; preserve everything outside. Update `v=N` to current generator version. |
-| File present without markers | Append the marker block to end-of-file (preserves user-authored content at the top). |
+| File present without markers                                   | Append the marker block to end-of-file (preserves user-authored content at the top).                          |
 
 ### Marker format
 
@@ -148,9 +148,9 @@ Both markers carry the same `v=` integer.
 2. Write to a temp file allocated via `mktemp` in `$TMPDIR` (NOT in the project worktree — keeps `git status` clean and avoids accidentally committing the temp file). Register a cleanup trap so the temp file is removed on any exit path including SIGINT and uncaught errors.
 3. Run `diff -u CLAUDE.md "$tmp"` (treating absent `CLAUDE.md` as `/dev/null`); print the unified diff to terminal.
 4. `AskUserQuestion`:
-   - **Header:** "Write block"
-   - **Question:** "Write this block to ./CLAUDE.md?"
-   - Options: `Write`, `Edit block first`, `Cancel`
+    - **Header:** "Write block"
+    - **Question:** "Write this block to ./CLAUDE.md?"
+    - Options: `Write`, `Edit block first`, `Cancel`
 5. `Write` → atomic `mv "$tmp" ./CLAUDE.md` (atomic within same filesystem; fall back to `cp + rm` with a warning if `mv` crosses filesystems). `Edit block first` → spawn `$EDITOR` on `$tmp` → re-show diff → re-confirm. `Cancel` → cleanup trap fires, exit.
 
 ### Pre-write safety check
@@ -158,9 +158,9 @@ Both markers carry the same `v=` integer.
 The check is gated on whether the **target file** (`./CLAUDE.md`) is inside a git worktree, not on the cwd. Logic:
 
 - If `git -C $(dirname ./CLAUDE.md) rev-parse --is-inside-work-tree` returns `true`:
-  - Run `git status --porcelain -- ./CLAUDE.md`. If non-empty, warn:
-    > `CLAUDE.md` has uncommitted changes — recommend committing first so this skill's diff is easy to review separately. Continue?
-  - User can confirm or cancel. Do not auto-commit.
+    - Run `git status --porcelain -- ./CLAUDE.md`. If non-empty, warn:
+        > `CLAUDE.md` has uncommitted changes — recommend committing first so this skill's diff is easy to review separately. Continue?
+    - User can confirm or cancel. Do not auto-commit.
 - If the rev-parse fails (not a git repo): silently skip the check. The user has chosen to work outside a repo; do not nag.
 
 ## Generated content template
@@ -178,7 +178,8 @@ WHICH hive serves which query, and where new writes should land.
 ### Hive Topology
 
 | Hive (UUID) | Name | Type | Embedding model | What it holds | Write to it? |
-|---|---|---|---|---|---|
+| ----------- | ---- | ---- | --------------- | ------------- | ------------ |
+
 {{ROWS}}
 
 **Why query phrasing matters here.** {{QUERY_PHRASING_GUIDANCE}}
@@ -191,12 +192,13 @@ WHICH hive serves which query, and where new writes should land.
 2. Confirm the topology above has not drifted: call `list_hives` once per session.
    If a hive is added / removed / renamed, re-run `/neohive:generate-claude-md`.
 3. Follow up with a targeted `memory_recall` for this project's domain. Suggested seeds:
-{{DOMAIN_RECALL_SEEDS}}
+   {{DOMAIN_RECALL_SEEDS}}
 
 ### What Goes Where: Cognitive Memory vs CLAUDE.md
 
 | Store in **Cognitive Memory** | Store in **CLAUDE.md** |
-|---|---|
+| ----------------------------- | ---------------------- |
+
 {{ROUTING_TABLE}}
 
 ### Hive routing for writes
@@ -212,17 +214,17 @@ specific reason.** When you do, write one sentence in the memory body explaining
 
 ### Substitution-variable contracts
 
-| Variable | Source | Format |
-|---|---|---|
-| `{{DATE}}` | system date at run time | `YYYY-MM-DD` |
-| `{{ROWS}}` | Stage B synthesis | one markdown table row per hive |
-| `{{QUERY_PHRASING_GUIDANCE}}` | Stage B — adapted to embedder mix | 1 paragraph; mentions code-token queries iff any code-tuned hive present; mentions affirmative-statement queries iff any prose-tuned hive present; recommends both styles via `queries` parameter when both present. |
-| `{{HIVE_PROVENANCE_GUIDE}}` | Stage B | 1 paragraph; per-hive 1-liner mapping name → typical content profile (e.g., "a hit from `<name>` came from indexed code; treat as factual"). |
-| `{{DOMAIN_RECALL_SEEDS}}` | Stage B — synthesized from sampled content | 3-5 example query strings as a markdown bullet list, scoped to the project's domain. |
-| `{{ROUTING_TABLE}}` | static template + actual hive names interpolated where the routing rules reference specific hives | 2-column markdown table; structurally same as Snyk's "What Goes Where" table; row contents reference user's actual hive names. **N=1 case:** still emit the full 2-column table — the conceptual split between cognitive memory and CLAUDE.md is independent of hive count, and a single-hive install still benefits from the routing guidance. |
-| `{{DEFAULT_WRITE_HIVE}}` | Stage B default-write-target selection | hive name in backticks |
-| `{{DEFAULT_WRITE_RATIONALE}}` | Stage B | 1 sentence; cites why this hive was chosen (e.g., "it is the only `knowledge`-typed hive and accepts curated prose entries"). |
-| `{{ADDITIONAL_WRITE_HIVES_DISAMBIGUATION}}` | Stage B — only emitted when 2+ hives are write-safe | bulleted disambiguation rules ("Use `<X>` when ...; use `<Y>` when ..."). Empty when only 1 write-safe hive. |
+| Variable                                    | Source                                                                                            | Format                                                                                                                                                                                                                                                                                                                                          |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `{{DATE}}`                                  | system date at run time                                                                           | `YYYY-MM-DD`                                                                                                                                                                                                                                                                                                                                    |
+| `{{ROWS}}`                                  | Stage B synthesis                                                                                 | one markdown table row per hive                                                                                                                                                                                                                                                                                                                 |
+| `{{QUERY_PHRASING_GUIDANCE}}`               | Stage B — adapted to embedder mix                                                                 | 1 paragraph; mentions code-token queries iff any code-tuned hive present; mentions affirmative-statement queries iff any prose-tuned hive present; recommends both styles via `queries` parameter when both present.                                                                                                                            |
+| `{{HIVE_PROVENANCE_GUIDE}}`                 | Stage B                                                                                           | 1 paragraph; per-hive 1-liner mapping name → typical content profile (e.g., "a hit from `<name>` came from indexed code; treat as factual").                                                                                                                                                                                                    |
+| `{{DOMAIN_RECALL_SEEDS}}`                   | Stage B — synthesized from sampled content                                                        | 3-5 example query strings as a markdown bullet list, scoped to the project's domain.                                                                                                                                                                                                                                                            |
+| `{{ROUTING_TABLE}}`                         | static template + actual hive names interpolated where the routing rules reference specific hives | 2-column markdown table; structurally same as Snyk's "What Goes Where" table; row contents reference user's actual hive names. **N=1 case:** still emit the full 2-column table — the conceptual split between cognitive memory and CLAUDE.md is independent of hive count, and a single-hive install still benefits from the routing guidance. |
+| `{{DEFAULT_WRITE_HIVE}}`                    | Stage B default-write-target selection                                                            | hive name in backticks                                                                                                                                                                                                                                                                                                                          |
+| `{{DEFAULT_WRITE_RATIONALE}}`               | Stage B                                                                                           | 1 sentence; cites why this hive was chosen (e.g., "it is the only `knowledge`-typed hive and accepts curated prose entries").                                                                                                                                                                                                                   |
+| `{{ADDITIONAL_WRITE_HIVES_DISAMBIGUATION}}` | Stage B — only emitted when 2+ hives are write-safe                                               | bulleted disambiguation rules ("Use `<X>` when ...; use `<Y>` when ..."). Empty when only 1 write-safe hive.                                                                                                                                                                                                                                    |
 
 ## Coordination changes (existing files)
 
@@ -247,27 +249,28 @@ Implementer's choice on whether to add this enrichment to Phase 1; the parsing e
 
 ### `getting-started/SKILL.md` — phase reorganization
 
-The current file has six numbered phases (Phase 0 — *Tell the user what's about to happen* through Phase 5 — *Final summary*). Insert the new Phase 3 between current Phase 2 and current Phase 3, then renumber so the file ends at Phase 6.
+The current file has six numbered phases (Phase 0 — _Tell the user what's about to happen_ through Phase 5 — _Final summary_). Insert the new Phase 3 between current Phase 2 and current Phase 3, then renumber so the file ends at Phase 6.
 
 **Renumbering map (exhaustive):**
 
-| Current | New | Phase title |
-|---|---|---|
-| Phase 0 | Phase 0 | Tell the user what's about to happen |
-| Phase 1 | Phase 1 | Register and verify the MCP server |
-| Phase 2 | Phase 2 | Auth token (only if needed) |
+| Current | New         | Phase title                                   |
+| ------- | ----------- | --------------------------------------------- |
+| Phase 0 | Phase 0     | Tell the user what's about to happen          |
+| Phase 1 | Phase 1     | Register and verify the MCP server            |
+| Phase 2 | Phase 2     | Auth token (only if needed)                   |
 | —       | **Phase 3** | **Generate project CLAUDE.md topology (NEW)** |
-| Phase 3 | Phase 4 | Migrate existing project memory |
-| Phase 4 | Phase 5 | Smart-recall hook (optional, power users) |
-| Phase 5 | Phase 6 | Final summary |
+| Phase 3 | Phase 4     | Migrate existing project memory               |
+| Phase 4 | Phase 5     | Smart-recall hook (optional, power users)     |
+| Phase 5 | Phase 6     | Final summary                                 |
 
 New Phase 3 prose:
 
 > ### Phase 3 — Generate project CLAUDE.md topology
 >
-> Now that the MCP is reachable, generate a project-specific topology block for `./CLAUDE.md`. This is what makes Claude reliable about *which* hive to query and *where* new writes should land — without it, the rules in `~/.claude/rules/neohive.md` are running blind.
+> Now that the MCP is reachable, generate a project-specific topology block for `./CLAUDE.md`. This is what makes Claude reliable about _which_ hive to query and _where_ new writes should land — without it, the rules in `~/.claude/rules/neohive.md` are running blind.
 >
 > Ask (one `AskUserQuestion`):
+>
 > - **Header:** "Topology block"
 > - **Question:** "Generate a project topology block in ./CLAUDE.md? (Recommended — improves tool-calling accuracy for everyone on this repo.)"
 > - Options: `Yes (Recommended)`, `Yes, but let me review the table before writing`, `Skip — I'll run /neohive:generate-claude-md later`
@@ -311,39 +314,44 @@ If nothing changed at all (the regenerated block is identical to the existing on
 
 ## Error-handling table
 
-| Failure | Handling | User-visible behavior |
-|---|---|---|
-| `list_hives` empty / errors | Abort, do not write | Error message naming the suspected cause; suggest re-running getting-started Phase 1 |
-| `memory_stats` unavailable | Continue with `(verify)` write-policy | Warning in synthesis review gate; user may proceed |
-| `memory_recall` empty for hive | Use generic fallback probes; if still empty, fall back to description verbatim | "What it holds" cell tagged `(no sampled memories)` |
-| User declines synthesis review | Offer re-sample / edit-row / cancel | No file writes |
-| User declines write gate | Print would-be content; exit | No partial writes |
-| `./CLAUDE.md` has uncommitted git changes | Warn; user confirms or cancels | Skill does not auto-commit |
-| File write fails (permissions / disk) | Surface OS error; leave file untouched | No retry, no partial state |
+| Failure                                   | Handling                                                                       | User-visible behavior                                                                |
+| ----------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| `list_hives` empty / errors               | Abort, do not write                                                            | Error message naming the suspected cause; suggest re-running getting-started Phase 1 |
+| `memory_stats` unavailable                | Continue with `(verify)` write-policy                                          | Warning in synthesis review gate; user may proceed                                   |
+| `memory_recall` empty for hive            | Use generic fallback probes; if still empty, fall back to description verbatim | "What it holds" cell tagged `(no sampled memories)`                                  |
+| User declines synthesis review            | Offer re-sample / edit-row / cancel                                            | No file writes                                                                       |
+| User declines write gate                  | Print would-be content; exit                                                   | No partial writes                                                                    |
+| `./CLAUDE.md` has uncommitted git changes | Warn; user confirms or cancels                                                 | Skill does not auto-commit                                                           |
+| File write fails (permissions / disk)     | Surface OS error; leave file untouched                                         | No retry, no partial state                                                           |
 
 ## Testing
 
 Manual verification steps for the implementer:
 
 **Stage A (Cartography) — run in isolation against a real NeoHive MCP:**
+
 - Confirm `list_hives` returns names + UUIDs; record output for fixture-building.
 - Confirm `memory_stats` returns per-hive type counts; record output.
 - Confirm probe-derivation produces sane queries for at least one realistic hive description (e.g., a hive named `Knowledge` with description "Curated insights"). Spot-check that probes are not just stopwords.
 
 **Stage B (Synthesis) — fixture-driven:**
+
 - Write a small fixture file capturing 2-3 representative `list_hives` + `memory_stats` + `memory_recall` shapes (one code-tuned hive, one prose-tuned hive, one auto-managed hive heavy in `example_pattern`).
 - Run synthesis against the fixture; assert the produced table has the expected `Write to it?` policy per hive (`NO`/`YES`/`RARELY`) and that `(verify)` markers appear iff a column is uncertain.
 - Decline the review gate; confirm no file is written.
 
 **Stage C (Write) — three integration cases:**
+
 1. Empty directory (no `./CLAUDE.md`): run skill, accept gates → assert `./CLAUDE.md` exists with marker block.
 2. Existing `./CLAUDE.md` with marker block (from a previous run): run skill → assert only the marker block region changed; pre-existing user content outside markers byte-for-byte identical.
 3. Existing `./CLAUDE.md` without markers (e.g., user-authored repo CLAUDE.md): run skill → assert original file content is preserved verbatim, marker block appended at EOF.
 
 **Coordination — migrate-memory regression:**
+
 - After Stage C runs, invoke `/neohive:migrate-memory` against the same `./CLAUDE.md`. Confirm: (a) Phase 1 detects the file; (b) Phase 2 parsing produces zero candidates from the marker-block region; (c) any user-authored content outside markers is parsed as candidates normally.
 
 **Coordination — getting-started end-to-end:**
+
 - Fresh repo + fresh NeoHive install. Run `/neohive:getting-started`. Confirm phases 0-6 fire in order, the new Phase 3 invokes `generate-claude-md`, and the final summary shows `✓ Project topology block in ./CLAUDE.md (N hives mapped)`.
 
 No automated test harness is in scope for v1; manual verification per the above is sufficient. If the marketplace later adopts a test harness, fold these into it.
