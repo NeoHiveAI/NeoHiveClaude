@@ -16,13 +16,13 @@ The dispatcher chose you (instead of the generic `Explore` agent) specifically b
 **Step 2 — Recall.** Call `mcp__neohive__memory_recall` with 2 to 4 affirmative-phrased queries that cover different angles of the question. Use the `queries` array parameter for multi-query RAG-Fusion when the question is open-ended.
 
 - GOOD queries (affirmative, domain-specific, what you'd say to a teammate):
-  - `"sqlite-vec F32_BLOB column type and dimension handling"`
-  - `"how the sync engine handles git clone credentials"`
-  - `"chunk role parent vs child vs standalone semantics"`
+    - `"sqlite-vec F32_BLOB column type and dimension handling"`
+    - `"how the sync engine handles git clone credentials"`
+    - `"chunk role parent vs child vs standalone semantics"`
 - BAD queries (interrogative, generic, search-engine-ish):
-  - `"how do we handle auth?"`
-  - `"find chunker code"`
-  - `"sqlite stuff"`
+    - `"how do we handle auth?"`
+    - `"find chunker code"`
+    - `"sqlite stuff"`
 
 If you're unsure what hives exist, call `mcp__neohive__list_hives` once at the start of the session.
 

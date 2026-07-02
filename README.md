@@ -44,19 +44,19 @@ export NEOHIVE_HOOK_DISABLED=1
 
 NeoHive cognitive memory — MCP server registration, managed rules for tool usage, and post-session learning extraction.
 
-| Type | Name | Description |
-|------|------|-------------|
-| Skill | `getting-started` | Guided first-run: verify MCP, set auth, generate topology block, migrate memory, enable helpers. Start here. |
-| Skill | `load-context` | Pre-load relevant NeoHive memories for the current task via `memory_context`. Run at the start of every session. |
-| Skill | `generate-claude-md` | Survey connected hives and write a project-specific topology block into `./CLAUDE.md` (hive table, write-routing, session-start non-negotiables). Re-runnable when hives change. |
-| Skill | `migrate-memory` | Scan local `CLAUDE.md` / `AGENTS.md` / `.claude/rules` and migrate project-scoped entries into NeoHive |
-| Skill | `design-codebase-docs` | Design a documentation gold standard through Socratic dialogue, save to NeoHive, validate with sample pages |
-| Skill | `enable-smart-prompts` | Generate a tailored smart-recall hook that rewrites prompts with a small model before querying NeoHive |
-| Skill | `capture-session-learnings` | End-of-session extraction of learnings, corrections, and insights into NeoHive semantic memory |
-| Agent | `explore-neohive` | Semantic-first codebase + knowledge exploration subagent. Prefer this over the built-in `Explore` in NeoHive-indexed projects. |
-| Hook | `SessionStart` | Installs/updates `~/.claude/rules/neohive.md` with persistent tool-usage instructions |
-| Hook | `UserPromptSubmit` | Injects relevant memories into context automatically on every prompt |
-| Hook | `PreToolUse` (Glob, Grep) | Nudges Claude toward `memory_recall` when running broad filesystem searches inside an indexed project (`NEOHIVE_PRETOOL_STRICT=1` to hard-deny, `NEOHIVE_PRETOOL_DISABLED=1` to opt out) |
+| Type  | Name                        | Description                                                                                                                                                                              |
+| ----- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Skill | `getting-started`           | Guided first-run: verify MCP, set auth, generate topology block, migrate memory, enable helpers. Start here.                                                                             |
+| Skill | `load-context`              | Pre-load relevant NeoHive memories for the current task via `memory_context`. Run at the start of every session.                                                                         |
+| Skill | `generate-claude-md`        | Survey connected hives and write a project-specific topology block into `./CLAUDE.md` (hive table, write-routing, session-start non-negotiables). Re-runnable when hives change.         |
+| Skill | `migrate-memory`            | Scan local `CLAUDE.md` / `AGENTS.md` / `.claude/rules` and migrate project-scoped entries into NeoHive                                                                                   |
+| Skill | `design-codebase-docs`      | Design a documentation gold standard through Socratic dialogue, save to NeoHive, validate with sample pages                                                                              |
+| Skill | `enable-smart-prompts`      | Generate a tailored smart-recall hook that rewrites prompts with a small model before querying NeoHive                                                                                   |
+| Skill | `capture-session-learnings` | End-of-session extraction of learnings, corrections, and insights into NeoHive semantic memory                                                                                           |
+| Agent | `explore-neohive`           | Semantic-first codebase + knowledge exploration subagent. Prefer this over the built-in `Explore` in NeoHive-indexed projects.                                                           |
+| Hook  | `SessionStart`              | Installs/updates `~/.claude/rules/neohive.md` with persistent tool-usage instructions                                                                                                    |
+| Hook  | `UserPromptSubmit`          | Injects relevant memories into context automatically on every prompt                                                                                                                     |
+| Hook  | `PreToolUse` (Glob, Grep)   | Nudges Claude toward `memory_recall` when running broad filesystem searches inside an indexed project (`NEOHIVE_PRETOOL_STRICT=1` to hard-deny, `NEOHIVE_PRETOOL_DISABLED=1` to opt out) |
 
 The slugs `start`, `revise-vector-memory`, `generate-docs`, and `generate-post-submit-hook` remain as deprecated aliases that redirect to the new names; they will be removed in a future minor release.
 
