@@ -1,4 +1,0 @@
-# Python bytecode generated when the plugin's hook helpers run / are tested.
-# Never ship this in the published plugin.
-__pycache__/
-*.pyc

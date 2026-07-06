@@ -35,18 +35,6 @@
                     }
                 ]
             }
-        ],
-        "PostToolUse": [
-            {
-                "matcher": "mcp__.*__(memory_.*|list_hives)",
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "${CLAUDE_PLUGIN_ROOT}/hooks/posttool-recall-stamp.sh",
-                        "timeout": 5000
-                    }
-                ]
-            }
         ]
     }
 }

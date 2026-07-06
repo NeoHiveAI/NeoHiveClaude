@@ -30,16 +30,6 @@ msg = d.get('user_message') or d.get('message') or d.get('prompt') or ''
 print(msg[:400])
 " 2>/dev/null) || true
 
-# Session id: used to stamp this recall into the per-session state file (HIVE-237)
-SESSION_ID=$(echo "$INPUT" | python3 -c "
-import sys, json
-try:
-    d = json.loads(sys.stdin.read())
-except:
-    d = {}
-print(d.get('session_id') or '')
-" 2>/dev/null) || true
-
 # Skip if no message, too short, or slash command
 if [ -z "$USER_MSG" ] || [ ${#USER_MSG} -lt 10 ]; then
   exit 0
@@ -105,18 +95,7 @@ print(json.dumps(payload))
 
 # ── Call NeoHive ────────────────────────────────────────────────────
 
-# Identify this caller in the User-Agent. The server records the request
-# User-Agent into query_log.client (mcp-handler.ts) as the only per-request
-# interface identifier available on the stateless MCP transport. Without an
-# explicit UA, curl sends a bare "curl/<ver>", which (a) misattributes this
-# hook-fired auto-context recall to a generic "curl" client indistinguishable
-# from any other curl caller, and (b) splits one Claude Code session's rows
-# across "curl" (these auto-context recalls) and "claude-code/<ver>" (the
-# model's own MCP calls). A self-identifying UA makes the client column
-# attributable and lets readers tell hook-fired (auto-context) recalls apart
-# from model-initiated ones server-side.
 CURL_ARGS=(-s --connect-timeout 3 --max-time 8 -X POST "$MCP_URL"
-           -A "neohive-context-hook"
            -H "Content-Type: application/json"
            -H "Accept: application/json, text/event-stream")
 if [ -n "${NEOHIVE_TOKEN:-}" ]; then
@@ -124,15 +103,6 @@ if [ -n "${NEOHIVE_TOKEN:-}" ]; then
 fi
 
 RESPONSE=$(curl "${CURL_ARGS[@]}" -d "$PAYLOAD" 2>/dev/null) || exit 0
-
-# ── Stamp this recall into the per-session state file (HIVE-237) ─────
-# This auto-context recall is fired by the hook, not by the model, so the
-# PostToolUse stamp hook never sees it; stamp it here. Best-effort.
-STATE_HELPER="${CLAUDE_PLUGIN_ROOT:-.}/hooks/session-state.py"
-if [ -n "$SESSION_ID" ] && [ -f "$STATE_HELPER" ]; then
-  printf '%s' "$RESPONSE" | python3 "$STATE_HELPER" \
-    stamp-recall-sse --session "$SESSION_ID" --query "$USER_MSG" 2>/dev/null || true
-fi
 
 # ── Parse SSE response ──────────────────────────────────────────────
 
