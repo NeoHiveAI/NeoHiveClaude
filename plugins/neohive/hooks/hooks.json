@@ -1,40 +1,52 @@
 {
-  "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh",
-            "timeout": 10000
-          }
+    "hooks": {
+        "SessionStart": [
+            {
+                "matcher": "",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh",
+                        "timeout": 10000
+                    }
+                ]
+            }
+        ],
+        "UserPromptSubmit": [
+            {
+                "matcher": "",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "${CLAUDE_PLUGIN_ROOT}/hooks/neohive-context.sh",
+                        "timeout": 10000
+                    }
+                ]
+            }
+        ],
+        "PreToolUse": [
+            {
+                "matcher": "Glob|Grep",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pretool-tree-walker.sh",
+                        "timeout": 5000
+                    }
+                ]
+            }
+        ],
+        "PostToolUse": [
+            {
+                "matcher": "mcp__.*__(memory_.*|list_hives)",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "${CLAUDE_PLUGIN_ROOT}/hooks/posttool-recall-stamp.sh",
+                        "timeout": 5000
+                    }
+                ]
+            }
         ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/neohive-context.sh",
-            "timeout": 10000
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Glob|Grep",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pretool-tree-walker.sh",
-            "timeout": 5000
-          }
-        ]
-      }
-    ]
-  }
+    }
 }

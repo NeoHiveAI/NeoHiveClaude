@@ -16,11 +16,12 @@ You are onboarding a user who has just installed the NeoHive plugin. Your job is
 Open with this exact script (do not paraphrase):
 
 > I'll walk you through setting up NeoHive on this machine. This takes 3–5 minutes and covers:
->   1. Confirming your NeoHive server is reachable
->   2. (Optional) Setting up your auth token
->   3. Generating a project-specific topology block in your CLAUDE.md
->   4. Migrating existing project knowledge into NeoHive
->   5. (Optional) Turning on the smart-recall hook
+>
+> 1. Confirming your NeoHive server is reachable
+> 2. (Optional) Setting up your auth token
+> 3. Generating a project-specific topology block in your CLAUDE.md
+> 4. Migrating existing project knowledge into NeoHive
+> 5. (Optional) Turning on the smart-recall hook
 >
 > You can stop at any point by saying "stop" or answering "skip" to a step.
 
@@ -62,12 +63,15 @@ Tell the user:
 > The NeoHive plugin doesn't bundle a default MCP server — you register yours explicitly. Two ways:
 >
 > **In-session (recommended):**
+>
 > ```
 > /mcp
 > ```
+>
 > Choose "Add server", pick HTTP, name it `neohive` (any key containing "neohive" works), and paste your gateway URL (e.g. `https://your-neohive-host/hiveminds/<hive-id>/mcp`).
 >
 > **CLI:**
+>
 > ```bash
 > claude mcp add neohive --transport http --url "https://your-neohive-host/hiveminds/<hive-id>/mcp"
 > ```
@@ -80,11 +84,11 @@ Pause here until the user confirms they've registered it, or say "skip" to jump 
 
 Once a server is registered, call `list_hives` and interpret:
 
-| Outcome | What to tell the user |
-|---|---|
-| Returns hives | "Connected. I can see N hives: X, Y, Z." Proceed to Phase 2. |
-| Empty list | "Server is reachable but reports no hives. Confirm with your admin — without at least one hive, NeoHive has nowhere to store memories." Pause for user input. |
-| Tool unavailable / error | "I can't reach the NeoHive MCP server." Run the diagnostics below. |
+| Outcome                  | What to tell the user                                                                                                                                         |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Returns hives            | "Connected. I can see N hives: X, Y, Z." Proceed to Phase 2.                                                                                                  |
+| Empty list               | "Server is reachable but reports no hives. Confirm with your admin — without at least one hive, NeoHive has nowhere to store memories." Pause for user input. |
+| Tool unavailable / error | "I can't reach the NeoHive MCP server." Run the diagnostics below.                                                                                            |
 
 ### Diagnostics if unreachable
 
@@ -132,16 +136,18 @@ If `list_hives` succeeded, skip this phase. Otherwise ask:
 For "Yes — I have one", show:
 
 > Export it before launching Claude:
+>
 > ```bash
 > export NEOHIVE_TOKEN="your-token-here"
 > ```
+>
 > Add that line to your shell rc (`~/.bashrc`, `~/.zshrc`, or `~/.config/fish/config.fish`) so it persists. Then restart Claude and rerun `/neohive:getting-started`.
 
 For the other answers, provide the matching guidance verbatim — don't improvise.
 
 ## Phase 3 — Generate project CLAUDE.md topology
 
-Now that the MCP is reachable, generate a project-specific topology block in `./CLAUDE.md`. This is what makes Claude reliable about *which* hive to query and *where* new writes should land — without it, the rules in `~/.claude/rules/neohive.md` are running blind.
+Now that the MCP is reachable, generate a project-specific topology block in `./CLAUDE.md`. This is what makes Claude reliable about _which_ hive to query and _where_ new writes should land — without it, the rules in `~/.claude/rules/neohive.md` are running blind.
 
 Ask (one `AskUserQuestion`):
 
@@ -203,9 +209,10 @@ Print a checklist of what's been set up and what's left. Use ✓ / ○ prefixes:
 Then this exact closing block:
 
 > **You're set. Three things to remember:**
->   1. Start every new session with `/neohive:load-context <what you're working on>` to pre-load relevant memory.
->   2. End sessions with `/neohive:capture-session-learnings` so new insights get captured.
->   3. When docs feel stale, try `/neohive:design-codebase-docs`.
+>
+> 1. Start every new session with `/neohive:load-context <what you're working on>` to pre-load relevant memory.
+> 2. End sessions with `/neohive:capture-session-learnings` so new insights get captured.
+> 3. When docs feel stale, try `/neohive:design-codebase-docs`.
 >
 > Run `/neohive:getting-started` again anytime to revisit these steps.
 
