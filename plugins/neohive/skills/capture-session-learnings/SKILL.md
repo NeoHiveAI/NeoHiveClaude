@@ -23,13 +23,14 @@ Scan the full session transcript for these categories of knowledge:
 6. **Idiomatic patterns**: A preferred way of doing something was established → `idiom` (importance 6-7)
 7. **Syntax/API learnings**: New syntax or API usage was clarified → `syntax_rule` or `stdlib_reference` (importance 7-9)
 
-**Be selective.** Only extract knowledge that would be valuable in a *future* session on a *different* day. Skip:
+**Be selective.** Only extract knowledge that would be valuable in a _future_ session on a _different_ day. Skip:
+
 - Session-specific file paths or temporary state
 - Trivial facts anyone would know
 - Information that's already in official documentation and easy to look up
 - Debugging steps that led nowhere
 
-For each candidate, formulate a clear, self-contained description. It should make sense to someone (or an LLM) reading it *without* the context of this session.
+For each candidate, formulate a clear, self-contained description. It should make sense to someone (or an LLM) reading it _without_ the context of this session.
 
 ## Phase 2 — Deduplicate Against Existing Memory
 
@@ -37,15 +38,16 @@ For **each** candidate learning:
 
 1. Call `memory_recall` with a semantic query that describes the learning (use `memory_recall` here, not `memory_context` — deduplication needs a narrow single-type search against the specific learning, not a broad context load)
 2. Examine the results:
-   - **Strong match found** (the memory system already knows this) → **Skip**. The system is working correctly.
-   - **Weak/partial match** (related but not the same insight) → **Store** with a reference to the related memory. This adds a new "angle" that may fire on different queries.
-   - **No match** (the memory system had no idea) → **Store**. This is a genuine knowledge gap.
+    - **Strong match found** (the memory system already knows this) → **Skip**. The system is working correctly.
+    - **Weak/partial match** (related but not the same insight) → **Store** with a reference to the related memory. This adds a new "angle" that may fire on different queries.
+    - **No match** (the memory system had no idea) → **Store**. This is a genuine knowledge gap.
 
-This is the critical step. The deduplication heuristic is: *if the memory system already had this insight, Claude should have found it during the session. If Claude didn't find it, either the insight is new, or the existing memory's embedding doesn't cover this query angle — either way, storing a new entry is correct.*
+This is the critical step. The deduplication heuristic is: _if the memory system already had this insight, Claude should have found it during the session. If Claude didn't find it, either the insight is new, or the existing memory's embedding doesn't cover this query angle — either way, storing a new entry is correct._
 
 ## Phase 3 — Store New Memories
 
 For each learning that passed deduplication, call `memory_store` with:
+
 - `content`: Clear, self-contained description of the learning
 - `type`: The appropriate type from Phase 1
 - `tags`: 3-6 relevant tags for filtering
