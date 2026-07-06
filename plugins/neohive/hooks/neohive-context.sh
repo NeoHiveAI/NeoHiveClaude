@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# NeoHive Context Injection — UserPromptSubmit hook (plugin version)
+# NeoHive Context Injection: UserPromptSubmit hook (plugin version)
 # Passes the user's prompt to NeoHive memory_recall via stateless MCP JSON-RPC.
 # Works for any project with a NeoHive MCP server configured.
 #
@@ -12,13 +12,14 @@
 set -uo pipefail
 
 if [ "${NEOHIVE_HOOK_DISABLED:-}" = "1" ]; then
+  cat > /dev/null  # drain stdin (hook protocol) before exiting
   exit 0
 fi
 
 # Read hook input from stdin
 INPUT=$(cat)
 
-# Extract user message — data goes through stdin, never interpolated into source
+# Extract user message: data goes through stdin, never interpolated into source
 USER_MSG=$(echo "$INPUT" | python3 -c "
 import sys, json
 try:

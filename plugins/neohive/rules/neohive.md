@@ -1,5 +1,5 @@
 ---
-version: '1.6.1'
+version: '1.6.3'
 managed_by: neohive-plugin
 ---
 
