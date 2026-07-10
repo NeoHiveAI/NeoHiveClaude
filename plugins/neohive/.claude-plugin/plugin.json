@@ -1,7 +1,7 @@
 {
   "name": "neohive",
   "description": "NeoHive cognitive memory: MCP server registration, managed rules for tool usage, the explore-neohive subagent, a PreToolUse nudge on Glob/Grep, end-user-clear skill names (load-context, capture-session-learnings, design-codebase-docs, enable-smart-prompts, generate-claude-md), and post-session learning extraction",
-  "version": "1.6.3",
+  "version": "1.6.4",
   "author": {
     "name": "NeoHiveAi"
   }
