@@ -1,5 +1,5 @@
 ---
-version: '1.6.3'
+version: '1.6.5'
 managed_by: neohive-plugin
 ---
 
@@ -24,9 +24,9 @@ If a hive contains the codebase you're working in (the `list_hives` output names
 - Use `memory_recall` to locate the relevant files, then use `Read` for the precise line numbers you need to edit.
 - Fall back to Glob/Grep only when you need an exact symbol that semantic search misses, or for files outside the index (e.g. brand-new files in your working tree).
 
-This applies for the entire session, not just at start: every time you'd reach for "let me search the codebase for X," try `memory_recall` first. The MCP server itself surfaces a self-reinforcing hint on every `memory_recall` / `memory_context` response (result count, top score, latency); when you see that hint, take it as a cue to keep using semantic recall instead of switching to filesystem tools.
+This applies for the entire session, not just at start: every time you'd reach for "let me search the codebase for X," try `memory_recall` first.
 
-The plugin also ships a `PreToolUse` hook (`pretool-tree-walker.sh`) that fires on `Glob` and `Grep` whenever the current working directory is inside a project with a NeoHive MCP server configured in `.mcp.json`. By default the hook lets the tool run and injects a reminder; set `NEOHIVE_PRETOOL_STRICT=1` to make it hard-deny those tools in indexed projects, or `NEOHIVE_PRETOOL_DISABLED=1` to opt out entirely. To suppress the in-response hint emitted by `memory_recall` / `memory_context`, set `NEOHIVE_MCP_HINTS=0`.
+The plugin also ships a `PreToolUse` hook (`pretool-tree-walker.sh`) that fires on `Glob` and `Grep` whenever the current working directory is inside a project with a NeoHive MCP server configured in `.mcp.json`. By default the hook lets the tool run and injects a reminder; set `NEOHIVE_PRETOOL_STRICT=1` to make it hard-deny those tools in indexed projects, or `NEOHIVE_PRETOOL_DISABLED=1` to opt out entirely.
 
 ## Delegating to Subagents — Prefer `explore-neohive` Over Built-In `Explore`
 
