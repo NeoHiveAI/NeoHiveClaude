@@ -19,12 +19,7 @@ TEMPLATE="${PLUGIN_ROOT}/rules/neohive.md"
 TARGET_DIR="${HOME}/.claude/rules"
 TARGET="${TARGET_DIR}/neohive.md"
 
-# Extract version from YAML frontmatter. Must stay quote-agnostic:
-# sync.sh's patch_yaml_frontmatter emits single quotes (version: '1.6.1')
-# and the mirrored rules/neohive.md is committed single-quoted, so a
-# double-quote-only match returns "" for both template and installed
-# copy, making "" != "" false and the rules file never install on fresh
-# machines nor update on version bumps. Handles: '1.0.0', "1.0.0", 1.0.0.
+# Extract version from YAML frontmatter (handles: version: '1.0.0', version: "1.0.0", version: 1.0.0)
 extract_version() {
   local file="$1"
   if [ -f "$file" ]; then
