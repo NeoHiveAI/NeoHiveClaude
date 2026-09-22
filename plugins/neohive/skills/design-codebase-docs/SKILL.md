@@ -21,7 +21,7 @@ Report what came back. If a prior gold standard is already stored, skip to Phase
 
 ## Phase 1 — Discover the current state of docs
 
-Dispatch the `explore-neohive` agent (or fall back to `Explore` if no NeoHive index is available) to survey existing documentation. Brief the agent like this:
+Dispatch the `explore-neohive` agent (or fall back to `Explore` if no NeoHive Index is available) to survey existing documentation. Brief the agent like this:
 
 > "Survey all documentation in this repo. Report:
 >
@@ -154,9 +154,9 @@ If "tweak": ask what section, rewrite, re-preview.
 
 ## Phase 5 — Save the gold standard to NeoHive
 
-Call `list_hives`. Ask which hive (default to the one matching the repo). Then `memory_store` with:
+Call `list_indexes`. Ask which Index (default to the one matching the repo). Then `memory_store` with:
 
-- `hive`: chosen hive
+- `index`: chosen Index
 - `type`: `convention`
 - `content`: the full `DOC_STANDARD.md` contents (this is the canonical reference for future sessions)
 - `tags`: `["documentation", "standard", "gold-standard", <repo-name>, <primary-audience-keyword>]`

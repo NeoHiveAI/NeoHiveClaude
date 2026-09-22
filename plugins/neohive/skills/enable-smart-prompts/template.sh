@@ -11,7 +11,7 @@
 #   6. Emit the formatted block so Claude sees it as context
 #
 # TEMPLATE PLACEHOLDERS (replace at generation time):
-#   __HIVE__          — hive slug, or empty string for cross-hive search
+#   __HIVE__          — index slug, or empty string for cross-index search
 #   __MODEL__         — model id for the query rewriter (e.g. claude-haiku-4-5)
 #   __TRIGGER__       — trigger policy: always | min_len | keyword | manual
 #   __KEYWORDS__      — pipe-delimited keywords if trigger=keyword
@@ -99,9 +99,12 @@ except Exception:
 PAYLOAD=$(python3 -c "
 import sys, json
 args = {'query': sys.argv[1], 'limit': 8}
-hive = sys.argv[2]
-if hive:
-    args['hive'] = hive
+index = sys.argv[2]
+if index:
+    args['index'] = index
+    # Deprecated alias, still honored: keeps the hook scoped when this generated
+    # hook runs against a server that predates the index rename.
+    args['hive'] = index
 print(json.dumps({
     'jsonrpc': '2.0', 'id': 1, 'method': 'tools/call',
     'params': {'name': 'memory_recall', 'arguments': args}
@@ -161,5 +164,5 @@ FILTERED=$(claude -p "$FILTER_PROMPT" --model "$MODEL" --output-format text 2>/d
 [ "$FILTERED" = "IRRELEVANT" ] && exit 0
 
 # ── Step 5: Emit context block ────────────────────────────────────────
-echo "NeoHive smart context (rewriter: $MODEL, hive: ${HIVE:-all}):"
+echo "NeoHive smart context (rewriter: $MODEL, index: ${HIVE:-all}):"
 echo "$FILTERED"

@@ -1,6 +1,6 @@
 ---
 name: getting-started
-description: Use when the user says "set up NeoHive", "get me started with NeoHive", "first time using NeoHive", "onboard me to NeoHive", or when `list_hives` has never been called in this repo. First-run setup that walks a new user through verifying the MCP server, configuring auth, generating a project-specific topology block in CLAUDE.md, migrating existing project memory (CLAUDE.md / AGENTS.md / .claude/rules), and enabling optional helpers. Invoke once per machine after installing the neohive plugin. Distinct from `/neohive:load-context`, which runs at the start of every session.
+description: Use when the user says "set up NeoHive", "get me started with NeoHive", "first time using NeoHive", "onboard me to NeoHive", or when `list_indexes` has never been called in this repo. First-run setup that walks a new user through verifying the MCP server, configuring auth, generating a project-specific topology block in CLAUDE.md, migrating existing project memory (CLAUDE.md / AGENTS.md / .claude/rules), and enabling optional helpers. Invoke once per machine after installing the neohive plugin. Distinct from `/neohive:load-context`, which runs at the start of every session.
 user-invocable: true
 allowed-tools: Bash, Read, Grep, Glob, AskUserQuestion, Skill
 ---
@@ -53,8 +53,8 @@ for line in found or ["no neohive MCP found"]:
 PY
 ```
 
-- **If one is found:** call `list_hives` and interpret per the table below.
-- **If none is found:** guide the user to register one (see 1b), then rerun `list_hives`.
+- **If one is found:** call `list_indexes` and interpret per the table below.
+- **If none is found:** guide the user to register one (see 1b), then rerun `list_indexes`.
 
 ### 1b. Registering a server (only if none found)
 
@@ -68,27 +68,27 @@ Tell the user:
 > /mcp
 > ```
 >
-> Choose "Add server", pick HTTP, name it `neohive` (any key containing "neohive" works), and paste your gateway URL (e.g. `https://your-neohive-host/hiveminds/<hive-id>/mcp`).
+> Choose "Add server", pick HTTP, name it `neohive` (any key containing "neohive" works), and paste your gateway URL (e.g. `https://your-neohive-host/hives/<hive-id>/mcp`).
 >
 > **CLI:**
 >
 > ```bash
-> claude mcp add neohive --transport http --url "https://your-neohive-host/hiveminds/<hive-id>/mcp"
+> claude mcp add neohive --transport http --url "https://your-neohive-host/hives/<hive-id>/mcp"
 > ```
 >
 > After registering, restart Claude and rerun `/neohive:getting-started`.
 
 Pause here until the user confirms they've registered it, or say "skip" to jump to Phase 6.
 
-### 1c. Verify with `list_hives`
+### 1c. Verify with `list_indexes`
 
-Once a server is registered, call `list_hives` and interpret:
+Once a server is registered, call `list_indexes` and interpret:
 
-| Outcome                  | What to tell the user                                                                                                                                         |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Returns hives            | "Connected. I can see N hives: X, Y, Z." Proceed to Phase 2.                                                                                                  |
-| Empty list               | "Server is reachable but reports no hives. Confirm with your admin — without at least one hive, NeoHive has nowhere to store memories." Pause for user input. |
-| Tool unavailable / error | "I can't reach the NeoHive MCP server." Run the diagnostics below.                                                                                            |
+| Outcome                  | What to tell the user                                                                                                                                            |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Returns Indexes          | "Connected. I can see N Indexes: X, Y, Z." Proceed to Phase 2.                                                                                                   |
+| Empty list               | "Server is reachable but reports no indexes. Confirm with your admin — without at least one Index, NeoHive has nowhere to store memories." Pause for user input. |
+| Tool unavailable / error | "I can't reach the NeoHive MCP server." Run the diagnostics below.                                                                                               |
 
 ### Diagnostics if unreachable
 
@@ -127,7 +127,7 @@ Then use `AskUserQuestion` to offer: "Fix token now", "I'll fix it later and res
 
 ## Phase 2 — Auth token (only if needed)
 
-If `list_hives` succeeded, skip this phase. Otherwise ask:
+If `list_indexes` succeeded, skip this phase. Otherwise ask:
 
 - **Header:** "Auth token"
 - **Question:** "Does your NeoHive server require a bearer token?"
@@ -147,7 +147,7 @@ For the other answers, provide the matching guidance verbatim — don't improvis
 
 ## Phase 3 — Generate project CLAUDE.md topology
 
-Now that the MCP is reachable, generate a project-specific topology block in `./CLAUDE.md`. This is what makes Claude reliable about _which_ hive to query and _where_ new writes should land — without it, the rules in `~/.claude/rules/neohive.md` are running blind.
+Now that the MCP is reachable, generate a project-specific topology block in `./CLAUDE.md`. This is what makes Claude reliable about _which_ Index to query and _where_ new writes should land — without it, the rules in `~/.claude/rules/neohive.md` are running blind.
 
 Ask (one `AskUserQuestion`):
 
@@ -161,7 +161,7 @@ If "Yes" or "Yes, but review": invoke the generator skill via the Skill tool:
 Skill(skill="neohive:generate-claude-md")
 ```
 
-The sub-skill handles its own confirmation gates (synthesis review + diff review), so this phase just waits for it to return. When it returns, report: "Topology block written to ./CLAUDE.md (N hives mapped)."
+The sub-skill handles its own confirmation gates (synthesis review + diff review), so this phase just waits for it to return. When it returns, report: "Topology block written to ./CLAUDE.md (N Indexes mapped)."
 
 If "Skip": tell the user they can run `/neohive:generate-claude-md` anytime to add the block, and continue.
 
@@ -199,9 +199,9 @@ If "Tell me more": explain in 3–4 sentences (what it adds, what it costs, how 
 Print a checklist of what's been set up and what's left. Use ✓ / ○ prefixes:
 
 ```
-✓ MCP server reachable (N hives: ...)
+✓ MCP server reachable (N indexes: ...)
 ✓ Auth token configured
-✓ Project topology block in ./CLAUDE.md (N hives mapped)
+✓ Project topology block in ./CLAUDE.md (N indexes mapped)
 ✓ N project memories migrated
 ○ Smart-recall hook (skipped; rerun /neohive:enable-smart-prompts anytime)
 ```

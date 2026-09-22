@@ -9,7 +9,7 @@ allowed-tools: Bash, Read, Write, Grep, Glob, AskUserQuestion
 
 You help the user install a customized `UserPromptSubmit` hook that intercepts their prompt, uses a small model to formulate a good NeoHive query, calls `memory_recall`, and injects relevant results back into Claude's context.
 
-This is a **dynamic setup** — every user has a different hive layout, shell, API key location, and tolerance for latency. You walk them through each choice with a strong recommended default, then write the script.
+This is a **dynamic setup** — every user has a different Index layout, shell, API key location, and tolerance for latency. You walk them through each choice with a strong recommended default, then write the script.
 
 ## Phase 0 — Check prerequisites
 
@@ -28,13 +28,13 @@ If `claude-cli` or `python3` is missing, stop and tell the user to install them.
 
 Ask these in sequence, one per `AskUserQuestion` call (never combine):
 
-### 1. Which hive to target
+### 1. Which Index to target
 
-Call `list_hives`. Ask:
+Call `list_indexes`. Ask:
 
-- **Header:** "Target hive"
-- **Question:** "Which hive should the hook search on every prompt?"
-- Options: populate from `list_hives`, first option `(Recommended) All hives (cross-hive RRF)` — this calls `memory_recall` without a `hive` param.
+- **Header:** "Target Index"
+- **Question:** "Which Index should the hook search on every prompt?"
+- Options: populate from `list_indexes`, first option `(Recommended) All indexes (cross-index RRF)` — this calls `memory_recall` without a `index` param.
 
 ### 2. Which model drives the query rewriter
 
@@ -43,7 +43,7 @@ Call `list_hives`. Ask:
 - Options:
     - `claude-haiku-4-5 (Recommended) — fast + cheap`
     - `claude-sonnet-4-6 — more accurate, slower, ~10x cost`
-    - `claude-opus-4-7 — overkill, only for very noisy hives`
+    - `claude-opus-4-7 — overkill, only for very noisy indexes`
 
 ### 3. Trigger policy
 
@@ -81,7 +81,7 @@ Build the script from the template at `${CLAUDE_PLUGIN_ROOT}/skills/enable-smart
 
 ```
 Generated hook with:
-  • Hive:          <hive-or-all>
+  • Index:          <index-or-all>
   • Model:         <model>
   • Trigger:       <policy>
   • Install path:  <path>
@@ -138,7 +138,7 @@ Tell the user:
 
 > Restart Claude (or run `/reload-plugins`) for the hook to take effect.
 >
-> Test it: start a new session and ask about something you know is in your hive. You should see a block starting with "NeoHive smart context:" before Claude's reply.
+> Test it: start a new session and ask about something you know is in your index. You should see a block starting with "NeoHive smart context:" before Claude's reply.
 >
 > Disable temporarily: `export <DISABLE_FLAG>=1` in your shell.
 > Disable permanently: remove the entry from your settings.json, or delete the script.
@@ -147,6 +147,6 @@ Tell the user:
 
 - **Never overwrite an existing hook at the target path without confirmation.** If the file exists, show its contents and ask whether to replace.
 - **Never put the API key in the generated script.** The script reads `$ANTHROPIC_API_KEY` at runtime.
-- **Never hardcode the hive UUID in the script.** It discovers the MCP URL the same way the default hook does (via `.mcp.json` / `~/.claude.json`).
+- **Never hardcode the Index UUID in the script.** It discovers the MCP URL the same way the default hook does (via `.mcp.json` / `~/.claude.json`).
 - **Always set a `--max-time` on every `curl` and `claude -p` call.** A slow hook blocks every prompt.
 - **Gracefully exit 0 on any failure.** A broken hook must never block the user's prompt from reaching Claude.
