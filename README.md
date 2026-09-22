@@ -1,6 +1,9 @@
 # NeoHiveClaude
 
-A Claude Code plugin marketplace for the [NeoHive](https://github.com/NeoHiveAi) cognitive memory system. Install the `neohive` plugin to wire Claude Code into any NeoHive MCP server — persistent semantic memory across sessions, automatic context recall, and post-session learning extraction.
+A Claude Code plugin marketplace for the [NeoHive](https://neohive.ai) cognitive memory system. Install the `neohive` plugin to wire Claude Code into any NeoHive MCP server — persistent semantic memory across sessions, automatic context recall, and post-session learning extraction.
+
+> **[NeoHive](https://neohive.ai)** — the context engineering layer for AI coding agents.
+> Official site: **[neohive.ai](https://neohive.ai)** · Docs: **[docs.neohive.ai](https://docs.neohive.ai)**
 
 ## Quick Start
 
@@ -48,7 +51,7 @@ NeoHive cognitive memory — MCP server registration, managed rules for tool usa
 | ----- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Skill | `getting-started`           | Guided first-run: verify MCP, set auth, generate topology block, migrate memory, enable helpers. Start here.                                                                             |
 | Skill | `load-context`              | Pre-load relevant NeoHive memories for the current task via `memory_context`. Run at the start of every session.                                                                         |
-| Skill | `generate-claude-md`        | Survey connected hives and write a project-specific topology block into `./CLAUDE.md` (hive table, write-routing, session-start non-negotiables). Re-runnable when hives change.         |
+| Skill | `generate-claude-md`        | Survey connected Indexes and write a project-specific topology block into `./CLAUDE.md` (Index table, write-routing, session-start non-negotiables). Re-runnable when Indexes change.    |
 | Skill | `migrate-memory`            | Scan local `CLAUDE.md` / `AGENTS.md` / `.claude/rules` and migrate project-scoped entries into NeoHive                                                                                   |
 | Skill | `design-codebase-docs`      | Design a documentation gold standard through Socratic dialogue, save to NeoHive, validate with sample pages                                                                              |
 | Skill | `enable-smart-prompts`      | Generate a tailored smart-recall hook that rewrites prompts with a small model before querying NeoHive                                                                                   |
@@ -115,3 +118,10 @@ After editing skills/hooks in an active session, run `/reload-plugins` to pick u
 ## Versioning
 
 Bump the `version` field in `plugins/neohive/.claude-plugin/plugin.json` on every change — Claude Code uses the version as a cache key, so without a bump installed users will NOT see updates.
+
+## About NeoHive
+
+[**NeoHive**](https://neohive.ai) is the one shared memory layer that runs entirely on your own infrastructure, works across every AI agent your team uses, and remembers what your team learns — not just what's in the code.
+
+- 🌐 [neohive.ai](https://neohive.ai)
+- 📚 [docs.neohive.ai](https://docs.neohive.ai)

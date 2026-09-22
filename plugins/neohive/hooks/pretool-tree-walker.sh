@@ -47,7 +47,7 @@ try:
         k = key.lower()
         url = val.get('url', '') or ''
         if 'neohive' in k or 'hivemind' in k \
-           or '/hiveminds/' in url or '/projects/' in url:
+           or '/hiveminds/' in url or '/projects/' in url or '/hives/' in url:
             print(url or key)
             break
 except Exception:
