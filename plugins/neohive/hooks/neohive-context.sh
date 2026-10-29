@@ -152,7 +152,12 @@ try:
     contents = result.get('content', [])
     texts = [c['text'] for c in contents if c.get('type') == 'text']
     combined = '\n'.join(texts)
-    if combined and 'No relevant memories found' not in combined:
+    # An isError reply is a failed search, not memory to inject.
+    if result.get('isError'):
+        if combined:
+            print('NeoHive auto-context unavailable:')
+            print(combined[:1000])
+    elif combined and 'No relevant memories found' not in combined:
         if len(combined) > 4000:
             combined = combined[:4000] + '\n\n... (truncated)'
         print('NeoHive auto-context (from project memory):')

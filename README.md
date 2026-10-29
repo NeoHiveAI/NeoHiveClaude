@@ -63,7 +63,7 @@ NeoHive cognitive memory — MCP server registration, managed rules for tool usa
 
 The slugs `start`, `revise-vector-memory`, `generate-docs`, and `generate-post-submit-hook` remain as deprecated aliases that redirect to the new names; they will be removed in a future minor release.
 
-The plugin does **not** ship a pre-configured MCP server — you register your own NeoHive gateway via Claude Code's built-in MCP commands (e.g. `/mcp` in-session or `claude mcp add`). The hook and skills discover any MCP server whose key contains `neohive` in your project `.mcp.json` or `~/.claude.json`, so one registration covers the whole plugin.
+The plugin does **not** ship a pre-configured MCP server, so you register your own NeoHive gateway with `claude mcp add --transport http --scope project neohive <url>`, run from the project root (`/mcp` in-session only manages servers already registered). The hook and skills discover any MCP server whose key contains `neohive` in your project `.mcp.json` or `~/.claude.json`, so one registration covers the whole plugin.
 
 ## Repository Layout
 

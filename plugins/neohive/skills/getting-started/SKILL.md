@@ -60,21 +60,17 @@ PY
 
 Tell the user:
 
-> The NeoHive plugin doesn't bundle a default MCP server — you register yours explicitly. Two ways:
->
-> **In-session (recommended):**
->
-> ```
-> /mcp
-> ```
->
-> Choose "Add server", pick HTTP, name it `neohive` (any key containing "neohive" works), and paste your gateway URL (e.g. `https://your-neohive-host/hives/<hive-id>/mcp`).
->
-> **CLI:**
+> The NeoHive plugin doesn't bundle a default MCP server, so you register yours explicitly. From your project's root folder, run this in a terminal, or prefix it with `!` to run it from this session:
 >
 > ```bash
-> claude mcp add neohive --transport http --url "https://your-neohive-host/hives/<hive-id>/mcp"
+> claude mcp add --transport http --scope project neohive "https://your-neohive-host/hives/<hive-id>/mcp"
 > ```
+>
+> Keep `--scope project`. It saves the server to `.mcp.json` in the folder you run it from, which is the first place the plugin's prompt hook looks, so that project recalls from its own Hive. Without it, Claude Code saves the server under your user config's entry for this folder, which the prompt hook never reads, so automatic recall stays off. Keep the name `neohive` too: the `explore-neohive` subagent looks for tools under that exact name.
+>
+> When you restart, Claude Code asks you to approve the servers in the project's `.mcp.json`. Approve `neohive`, or its tools stay unavailable.
+>
+> `/mcp` inside a session only shows and manages servers that are already registered; it cannot add one.
 >
 > After registering, restart Claude and rerun `/neohive:getting-started`.
 
