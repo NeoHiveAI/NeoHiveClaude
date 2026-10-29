@@ -129,15 +129,27 @@ try:
     if payload is None:
         payload = raw
     d = json.loads(payload)
-    texts = [c.get('text','') for c in d.get('result',{}).get('content',[]) if c.get('type')=='text']
+    result = d.get('result', {})
+    texts = [c.get('text','') for c in result.get('content',[]) if c.get('type')=='text']
     combined = '\n'.join(texts)
-    if combined and 'No relevant memories found' not in combined:
+    # An isError reply must not reach the filter step as memory.
+    if result.get('isError'):
+        if combined:
+            print('NEOHIVE_ERROR:' + combined[:1000])
+    elif combined and 'No relevant memories found' not in combined:
         print(combined[:6000])
 except Exception:
     pass
 " 2>/dev/null) || exit 0
 
 [ -z "$RAW_MEMORIES" ] && exit 0
+
+case "$RAW_MEMORIES" in
+  NEOHIVE_ERROR:*)
+    printf 'NeoHive auto-context unavailable:\n%s\n' "${RAW_MEMORIES#NEOHIVE_ERROR:}"
+    exit 0
+    ;;
+esac
 
 # ── Step 4: Ask small model to filter + format ────────────────────────
 FILTER_PROMPT=$(cat <<EOF
